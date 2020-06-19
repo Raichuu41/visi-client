@@ -144,6 +144,7 @@ export default {
         try {
             console.log('load dataset after mounting');
             const res = await fetch(`${apiUrl}/api/v1/dataset/all`);
+            console.log("Wir sind hier");
             console.log(res);
             if (!res.ok) {
                 this.$notify({

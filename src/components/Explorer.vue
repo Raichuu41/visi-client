@@ -513,7 +513,7 @@ import Classifier from './Classifier';
 import Logs from './Logs';
 import RangeSlider from './RangeSlider';
 import { apiUrl } from '../config/apiUrl';
-import wasm from '../assets/wasm/optimized.wasm';
+// import wasm from '../assets/wasm/optimized.wasm';
 import { logYellow } from '../util/logging';
 
 export default {
