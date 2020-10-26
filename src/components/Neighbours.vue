@@ -21,6 +21,11 @@
                 <div class="loader" v-if="loading"></div>
             </div>
         </div>
+        <div class="row">
+            <div @click="dummy_test" class="btn">
+                Add all proposals
+            </div>
+        </div>
     </div>
 </template>
 
@@ -28,7 +33,7 @@
 import RangeSlider from './RangeSlider';
 import Repeat from '../icons/Repeat';
 import X from '../icons/X';
-import { apiUrl } from '../config/apiUrl';
+import { apiUrl } from '@/config/apiUrl';
 
 export default {
     name: 'Neighbours',
