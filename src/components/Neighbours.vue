@@ -22,7 +22,7 @@
             </div>
         </div>
         <div class="row">
-            <div @click="dummy_test" class="btn">
+            <div class="btn">
                 Add all proposals
             </div>
         </div>
@@ -33,7 +33,7 @@
 import RangeSlider from './RangeSlider';
 import Repeat from '../icons/Repeat';
 import X from '../icons/X';
-import { apiUrl } from '@/config/apiUrl';
+import { apiUrl } from '../config/apiUrl';
 
 export default {
     name: 'Neighbours',
