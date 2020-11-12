@@ -22,7 +22,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="btn">
+            <div class="btn" @click="addAllNeighbours">
                 Add all proposals
             </div>
         </div>
@@ -116,6 +116,38 @@ export default {
 
         resetNeighbours() {
             this.getStore().resetGroupNeighbours();
+        },
+
+        async addAllNeighbours() {
+            this.loading = true;
+            const store = this.getStore();
+            store.resetScaleTranslate();
+
+            const body = {
+                positives: store.getNodeIdsByGroupId(this.activeGroupId),
+                threshold: this.neighboursThreshold,
+                groupId: this.activeGroupId,
+                userId: this.$parent.userId,
+            };
+
+            // both objects are empty on init
+            if (
+                Object.keys(store.proposals).length
+                || Object.keys(store.removedProposals).length
+            ) {
+                body.negatives = Object.keys(store.proposals).map(key => +key);
+            }
+            const res = await fetch(`${apiUrl}/api/v1/getGroupNeighbours`, {
+                method: 'POST',
+                headers: { 'Content-type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) throw Error(res.statusText);
+            const { neighbours, group } = await res.json();
+            console.log({ neighbours, group });
+            this.loading = false;
+            const neighbourIds = Object.keys(neighbours);
+            store.addNodesToActiveGroup(neighbourIds);
         },
     },
 };

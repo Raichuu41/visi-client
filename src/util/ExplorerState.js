@@ -1322,6 +1322,12 @@ export default class ExplorerState {
 
         return null;
     }
+    /*
+    addAllProposals(e) {
+        console.log('addAllProposals');
+
+    }
+    */
 
     handleMouseUp(e) {
         console.log('mouseup');
