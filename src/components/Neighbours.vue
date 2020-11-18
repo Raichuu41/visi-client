@@ -43,6 +43,7 @@ export default {
         'changeNeighboursThreshold',
         'activeGroupId',
         'stop',
+        'current_neighbours',
     ],
     components: {
         RangeSlider,
@@ -99,6 +100,7 @@ export default {
                 const { neighbours, group } = await res.json();
                 store.updateGroupProposals(neighbours);
                 store.addNodesToActiveGroup(group);
+                this.current_neighbours = neighbours;
                 console.log({ neighbours, group });
                 this.loading = false;
             } catch (e) {
@@ -122,32 +124,10 @@ export default {
             this.loading = true;
             const store = this.getStore();
             store.resetScaleTranslate();
-
-            const body = {
-                positives: store.getNodeIdsByGroupId(this.activeGroupId),
-                threshold: this.neighboursThreshold,
-                groupId: this.activeGroupId,
-                userId: this.$parent.userId,
-            };
-
-            // both objects are empty on init
-            if (
-                Object.keys(store.proposals).length
-                || Object.keys(store.removedProposals).length
-            ) {
-                body.negatives = Object.keys(store.proposals).map(key => +key);
-            }
-            const res = await fetch(`${apiUrl}/api/v1/getGroupNeighbours`, {
-                method: 'POST',
-                headers: { 'Content-type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-            if (!res.ok) throw Error(res.statusText);
-            const { neighbours, group } = await res.json();
-            console.log({ neighbours, group });
             this.loading = false;
-            const neighbourIds = Object.keys(neighbours);
+            const neighbourIds = Object.keys(this.current_neighbours);
             store.addNodesToActiveGroup(neighbourIds);
+            await this.getGroupNeighbours();
         },
     },
 };
