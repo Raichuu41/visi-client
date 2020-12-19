@@ -5,6 +5,7 @@
             :wasmMode="wasmMode"
             :toggleWasmMode="toggleWasmMode"
             :name="datasetName"
+            :userName="this.userName"
         />
 
         <router-view
@@ -41,6 +42,7 @@ export default {
     data: () => ({
         dataset: null, // todo reset to 001
         userId: null,
+        userName: null,
         isAuth: false, // todo reset to false
         selectedImgCount: 500, // default
         wasmMode: false,
@@ -60,10 +62,11 @@ export default {
             this.datasetName = name;
             this.$router.push('/explorer');
         },
-        setAuth(userId) {
+        setAuth(userId, userName) {
             // console.log('logged in')
             this.isAuth = true;
             this.userId = userId;
+            this.userName = userName;
             console.log('Auth set: ', this.isAuth);
             this.$router.push(`/${DATASET}`);
         },
@@ -74,6 +77,7 @@ export default {
             console.log('Logout');
             this.isAuth = false;
             this.userId = null;
+            this.userName = null;
             this.$router.push({ name: LOGIN });
         },
         checkRoute(to, from, next) {

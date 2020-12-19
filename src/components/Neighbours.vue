@@ -101,7 +101,11 @@ export default {
                 store.updateGroupProposals(neighbours);
                 store.addNodesToActiveGroup(group);
                 this.current_neighbours = neighbours;
-                console.log({ neighbours, group });
+                console.log('alo Nachbar');
+                console.log(neighbours);
+                console.log('alo Gruppe');
+                console.log(group);
+                // console.log({ neighbours, group });
                 this.loading = false;
             } catch (e) {
                 this.loading = false;

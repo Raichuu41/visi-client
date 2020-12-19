@@ -61,6 +61,10 @@
                 <stop v-if="autoUpdateEmbedding"></stop>
             </div>-->
             <!--            <router-link v-if="!isAuth" to="/login">Login</router-link>-->
+            <div v-if="this.userName !== null" class="user-name"
+                 v-tooltip="`Logged in as ${this.userName}`">
+                {{this.userName}}
+            </div>
             <router-link v-if="isAuth" to="/logout" v-tooltip="'logout'">
                 <logout></logout
             ></router-link>
@@ -91,6 +95,7 @@ export default {
         toggleWasmMode: Function,
         isAuth: Boolean,
         name: String,
+        userName: String,
     },
     data: () => ({
         loading: false,
@@ -245,4 +250,16 @@ icon:hover {
 
     padding-left: 5px;
 }
+
+.user-name {
+    display: flex;
+    align-items: center;
+
+    color: #767676;
+    font-weight: 400;
+    font-size: 1.3rem;
+
+    padding-left: 5px;
+}
+
 </style>

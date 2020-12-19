@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { apiUrl } from '../config/apiUrl';
+import { apiUrl } from '@/config/apiUrl';
 
 export default {
     name: 'Login',
@@ -49,7 +49,7 @@ export default {
                 const data = await res.json();
 
                 if (data.isAuth) {
-                    this.setAuth(data.id);
+                    this.setAuth(data.id, data.user);
                     this.$notify({
                         group: 'default',
                         title: 'Login successful',
@@ -70,7 +70,7 @@ export default {
                 });
             }
             this.loading = false;
-            if (process.env.NODE_ENV === 'development') this.setAuth(0);
+            // if (process.env.NODE_ENV === 'development') this.setAuth(0);
         },
     },
 };
