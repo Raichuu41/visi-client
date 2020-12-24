@@ -83,19 +83,21 @@
                 <div class="items" v-if="!loadingSnapshots">
                     <div
                         class="btn btn-item"
-                        :key="snap.id"
-                        @click="selectSnapshot(snapI)"
-                        v-for="(snap, snapI) in snapshots"
+                        :key="snap.snapshot_id"
+                        @click="selectSnapshot(snap.snapshot_id)"
+                        v-for="snap in snapshots"
                     >
                         <div>
                             <div class="row v-center">
                                 <div class="title-dataset">
-                                    {{ `${new Date(snap.createdAt).toDateString()}` }}
+                                    {{ snap.snapshot_name }}
                                 </div>
                             </div>
+                            <div class="description-small">{{ `${new Date(snap.created_at).toDateString()}` }}</div>
+                            <div class="description-small">{{ `Created: ${snap.created_at}` }}</div>
                             <div class="description-small">{{ `Images: ${snap.count}` }}</div>
-                            <div class="description">
-                                {{ `Groups: ${snap.groups.length}` }}
+                            <div class="description-small">
+                                {{ `Groups: ${snap.groups_count}` }}
                             </div>
                         </div>
                     </div>
@@ -107,7 +109,7 @@
 </template>
 
 <script>
-import { apiUrl } from '../config/apiUrl';
+import {apiUrl} from '../config/apiUrl';
 import RangeSlider from './RangeSlider';
 
 export default {
@@ -144,7 +146,6 @@ export default {
         try {
             console.log('load dataset after mounting');
             const res = await fetch(`${apiUrl}/api/v1/dataset/all`);
-            console.log("Wir sind hier");
             console.log(res);
             if (!res.ok) {
                 this.$notify({
@@ -177,15 +178,15 @@ export default {
                 this.name = '';
             } else {
                 this.selectedDataset = id;
-                const { size, name } = this.datasets.find(e => e.id === this.selectedDataset);
+                const {size, name} = this.datasets.find(e => e.id === this.selectedDataset);
                 this.name = name;
                 this.maxCount = size;
                 this.imgCount = size < 500 ? size : 500;
             }
         },
-        changeImgCount({ target }) {
+        changeImgCount({target}) {
             console.log('changeImgCount');
-            const { size } = this.datasets.find(e => e.id === this.selectedDataset);
+            const {size} = this.datasets.find(e => e.id === this.selectedDataset);
             // console.log(target.value);
             // console.log(size, this.selectedDataset);
             this.imgCount = +target.value <= size ? +target.value : size; // < 500 ? 500 : +target.value;
@@ -224,10 +225,24 @@ export default {
             }
         },
 
-        selectSnapshot(id) {
-            console.log('selectSnapshot', id, this.snapshots);
-            this.imgCount = this.snapshots[id].count;
-            this.handleChangeDataset(this.selectedDataset, this.name, this.imgCount, this.snapshots[id].nodes, this.snapshots[id].groups);
+        async selectSnapshot(snapshotId) {
+            console.log('selectSnapshot', snapshotId);
+            const response = await fetch(`${apiUrl}/api/v1/snapshots/load?snapshot=${snapshotId}`);
+            if (!response.ok) {
+                this.$notify({
+                    group: 'default',
+                    title: 'Error selecting snapshot',
+                    type: 'error',
+                    text: response.statusText,
+                });
+                return;
+            }
+            const snapshotData = await response.json();
+            console.log('received snapshot data successfully');
+            this.handleChangeDataset(
+                snapshotData.dataset, this.name, snapshotData.count, snapshotData.nodes,
+                snapshotData.groups,
+            );
         },
     },
 };
