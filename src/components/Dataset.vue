@@ -206,7 +206,7 @@ export default {
                 // start loading
                 this.loadingSnapshots = true;
                 const res = await fetch(
-                    `${apiUrl}/api/v1/snapshots?dataset=${this.selectedDataset}&userid=${this.userId}`,
+                    `${apiUrl}/api/v1/snapshots?userid=${this.userId}&dataset=${this.selectedDataset}&`,
                 );
                 console.log(res);
                 if (!res.ok) {

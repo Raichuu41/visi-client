@@ -94,7 +94,7 @@ export default class ExplorerState {
         this.nonActiveGroupAplha = 50;
 
         // performance messure
-        this.maxDrawTime = 0;
+        this.maxDrawTime = 1;
         this.maxHitMapTime = 0;
         this.perfLogs = {
             draw: [],

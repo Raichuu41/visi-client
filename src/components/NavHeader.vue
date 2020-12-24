@@ -5,31 +5,15 @@
             <router-link class="title-header" to="/explorer">
                 Visual Similarity Explorer:
             </router-link>
-            <!--            <div class="btn" @click="toggleWasmMode" :class="{ active: wasmMode }">-->
-            <!--                wasm-->
-            <!--            </div>-->
             <div v-if="explorer" class="dataset-name">{{ name }}</div>
         </div>
 
         <div class="right-header">
-            <!--<router-link to="/svm">SVM</router-link>-->
-            <!--<router-link v-if="isAuth && explorer" to="/explorer/classifier">Classifier</router-link>-->
-            <!--            <div-->
-            <!--                v-if="explorer"-->
-            <!--                :class="{ active: loading }"-->
-            <!--                @click="updateEmbedding"-->
-            <!--                v-tooltip="'update Embedding'"-->
-            <!--                class="icon"-->
-            <!--            >-->
-            <!--                <send v-if="!loading"></send>-->
-            <!--                <div class="loader" v-if="loading"></div>-->
-            <!--            </div>-->
-            <!--            <router-link v-if="isAuth" to="/dataset">Dataset</router-link>-->
-
             <div v-if="explorer" @click="handleDataset" class="icon" v-tooltip="'switch dataset'">
                 <database></database>
             </div>
-            <div v-if="explorer" @click="handleSave" class="icon" v-tooltip="'save groups and embedding'">
+            <div v-if="explorer" @click="handleSave" class="icon"
+                 v-tooltip="'save groups and embedding'">
                 <save></save>
             </div>
             <div
@@ -37,8 +21,7 @@
                 :class="{ active: showSettings }"
                 @click="toggleSettings"
                 class="icon"
-                v-tooltip="'settings'"
-            >
+                v-tooltip="'settings'">
                 <settings></settings>
             </div>
             <div
@@ -46,21 +29,9 @@
                 :class="{ active: help }"
                 @click="toggleHelp"
                 class="icon"
-                v-tooltip="help ? 'close help' : 'show help'"
-            >
+                v-tooltip="help ? 'close help' : 'show help'">
                 <help></help>
             </div>
-
-            <!--<div
-                @click="toggleUpdateEmbedding"
-                :class="{ active: autoUpdateEmbedding }"
-                class="btn"
-            >
-                {{ autoUpdateEmbedding ? 'stop' : 'start' }}
-                <play v-if="!autoUpdateEmbedding"></play>
-                <stop v-if="autoUpdateEmbedding"></stop>
-            </div>-->
-            <!--            <router-link v-if="!isAuth" to="/login">Login</router-link>-->
             <div v-if="this.userName !== null" class="user-name"
                  v-tooltip="`Logged in as ${this.userName}`">
                 {{this.userName}}
