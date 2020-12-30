@@ -1,18 +1,31 @@
 <template>
     <div class="body">
-        <div class="area login">
-            <label>
-                <div class="title">Username</div>
-                <input type="text" v-model="user" />
-            </label>
-            <label>
-                <div class="title">Password</div>
-                <input type="password" v-model="password" />
-            </label>
-            <div :class="{ active: loading }" @click="login" class="btn margin">login</div>
-            <div class="title" style="color: red" v-if="error">{{ error }}</div>
-            <div class="title" style="color: red" v-if="loading">Loading...</div>
-        </div>
+        <form id="loginForm"
+        @submit="login">
+            <div class="area login">
+                <label>
+                    <div class="title login">Username</div>
+                    <eva-input class="login-fields"
+                        placeholder="Your username..."
+                        :status="user ? 'success' : 'danger'"
+                        v-model="user" />
+                </label>
+                <label>
+                    <div class="title login">Password</div>
+                    <eva-input class="login-fields"
+                               placeholder="Your password..."
+                               :status="password ? 'success' : 'danger'"
+                               type="password"
+                               v-model="password" />
+                </label>
+                <v-btn :class="{ active: loading }"
+                       :disabled="verifyInput()"
+                       class="btn margin"
+                    type="submit">login</v-btn>
+                <div class="title" style="color: red" v-if="error">{{ error }}</div>
+                <div class="title" style="color: red" v-if="loading">Loading...</div>
+            </div>
+        </form>
     </div>
 </template>
 
@@ -29,6 +42,10 @@ export default {
         loading: false,
     }),
     methods: {
+        verifyInput() {
+            return (!this.user || !this.password);
+        },
+
         async login() {
             this.loading = true; // start loading
             // console.log('Login :', this.user, this.password);
@@ -86,12 +103,22 @@ export default {
     align-items: center;
 }
 
+.login-fields {
+    width: 20rem;
+    padding-right: 8px;
+    padding-left: 8px;
+}
+
 .login {
     width: 20rem;
     padding-right: 8px;
     padding-top: 0.5rem;
 }
 
+.title.login {
+    text-align: left;
+    padding: 8px
+}
 input {
     width: 90%;
     margin: 8px;

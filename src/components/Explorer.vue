@@ -515,6 +515,7 @@ import RangeSlider from './RangeSlider';
 import { apiUrl } from '../config/apiUrl';
 // import wasm from '../assets/wasm/optimized.wasm';
 import { logYellow } from '../util/logging';
+// import bus from '../EventBus';
 
 export default {
     store: null,
@@ -557,6 +558,7 @@ export default {
     data: () => ({
         // store: null,
         socket: null,
+        snapshotName: '',
         connectedToSocket: false,
         showSettings: false,
         updateNodes: false,
@@ -695,6 +697,7 @@ export default {
                     nodes,
                     datasetId: this.dataset,
                     userId: this.userId,
+                    // datasetName: this.datasetName,
                     count: this.selectedImgCount,
                     embeddingDegree: this.embeddingDegree,
                 });
@@ -1181,7 +1184,7 @@ export default {
         addNode(node) {
             // console.warn(node);
             if (node.nodeId % 50 === 0) console.warn(`Add Node ${node.index}:`, node);
-            const addNode1 = this.wasm.addNode(
+            this.wasm.addNode(
                 node.x,
                 node.y,
                 node.index,
@@ -1290,7 +1293,7 @@ export default {
                 let i = this.explorerPixelStart,
                     size = this.explorerPixelStart + this.explorerPixelSize;
                 i < size;
-                i++
+                i += 1
             ) {
                 // checksum += this.wasm.U8[i];
             }
@@ -1303,7 +1306,7 @@ export default {
                 let i = this.hitMapPixelStart,
                     size = this.hitMapPixelStart + this.explorerPixelSize;
                 i < size;
-                i++
+                i += 1
             ) {
                 // checksum += this.wasm.U8[i];
             }
@@ -1337,15 +1340,13 @@ export default {
             navHeatmap.width = parantWidth / 4;
             navHeatmap.height = parantHeight / 4;
         },
-
-        async saveSnapshot() {
+        async saveSnapshot(snapshotName) {
             console.log('saveSnapshot');
             const nodes = this.store.getNodes();
             const groups = this.savedGroups;
             const { dataset } = this;
             const count = this.selectedImgCount;
             const userid = this.userId;
-            console.log(nodes, groups);
             // dont save if there not all nodes loaded
             if (!Object.keys(nodes).length || this.loadingImgs) {
                 return this.$notify({
@@ -1365,6 +1366,7 @@ export default {
                     dataset,
                     count,
                     userid,
+                    snapshotName,
                 }),
             })
                 .then(res => res.json())
@@ -1378,7 +1380,7 @@ export default {
                 });
             this.$notify({
                 group: 'default',
-                title: 'Snapshot saved',
+                title: `Snapshot "${snapshotName}" saved`,
                 type: 'success',
                 text: data.message,
             });

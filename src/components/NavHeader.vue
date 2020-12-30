@@ -12,7 +12,7 @@
             <div v-if="explorer" @click="handleDataset" class="icon" v-tooltip="'switch dataset'">
                 <database></database>
             </div>
-            <div v-if="explorer" @click="handleSave" class="icon"
+            <div v-if="explorer" @click="showSave" class="icon"
                  v-tooltip="'save groups and embedding'">
                 <save></save>
             </div>
@@ -40,6 +40,37 @@
                 <logout></logout
             ></router-link>
         </div>
+        <modal name="saveSnapshot" :resizable="true" height="auto" width="450px">
+            <div class="vue-dialog">
+                <div class="dialog-content">
+                    <div class="dialog-c-title">
+                        Save Snapshot
+                    </div>
+                    <div class="dialog-c-text">
+                        Are you sure you want create a snapshot?
+                        <br>
+                    </div>
+                        <p>
+                            <label for="snapshotName">Snapshot Name:</label>
+                            <eva-input
+                            id="snapshotName"
+                            v-model="snapshotName"
+                            type="text"
+                            name="snapshotName"
+                            :status="verifySnapshotName() ? 'success' : 'danger'"
+                            placeholder="Please enter a name"/>
+                        </p>
+                        <div class="vue-dialog-buttons">
+                            <button class="vue-dialog-button button"
+                                    @click="checkSnapshotName"
+                            :disabled="!snapshotName">Ok</button>
+                            <button class="vue-dialog-button button" @click="closeSave">
+                                Cancel
+                            </button>
+                        </div>
+                </div>
+            </div>
+        </modal>
     </div>
 </template>
 <script>
@@ -49,7 +80,8 @@ import Logout from '../icons/Logout';
 import Database from '../icons/Database';
 import Save from '../icons/Save';
 import Settings from '../icons/Settings';
-import { DATASET } from '../util/modes';
+import { DATASET } from '@/util/modes';
+// import bus from '../EventBus';
 
 export default {
     name: 'NavHeader',
@@ -73,8 +105,26 @@ export default {
         explorer: false,
         help: true,
         showSettings: false,
+        snapshotName: '',
+        snapshotError: '',
     }),
     methods: {
+        verifySnapshotName() {
+            if (!this.snapshotName) {
+                this.snapshotError = 'Snapshot name required!';
+                return false;
+            }
+            this.snapshotError = '';
+            return true;
+        },
+        checkSnapshotName() {
+            if (this.verifySnapshotName()) {
+                this.$modal.hide('saveSnapshot');
+                this.$root.explorer.saveSnapshot(this.snapshotName);
+                this.snapshotName = '';
+            }
+        },
+
         updateEmbedding() {
             console.log('updateEmbedding');
             console.log(this.$root.explorer);
@@ -125,24 +175,13 @@ export default {
                 ],
             });
         },
-        handleSave() {
-            this.$modal.show('dialog', {
-                title: 'Save snapshot',
-                text: 'You will save your groups and the current embedding permanently and get load it anytime from dataset menu',
-                buttons: [
-                    {
-                        title: 'Ok',
-                        handler: () => {
-                            this.$modal.hide('dialog');
-                            this.$root.explorer.saveSnapshot();
-                        },
-                    },
-                    {
-                        title: 'Cancel',
-                        default: true, // Will be triggered by default if 'Enter' pressed.
-                    },
-                ],
-            });
+        showSave() {
+            this.snapshotError = '';
+            this.$modal.show('saveSnapshot');
+        },
+        closeSave() {
+            this.$modal.hide('saveSnapshot');
+            this.snapshotName = '';
         },
     },
     mounted() {
@@ -198,17 +237,6 @@ a:hover {
 
 icon:hover {
     color: #484848;
-}
-
-.active {
-    /*//background-color: paleturquoise;*/
-    border-bottom: 5px solid paleturquoise;
-    color: #484848;
-    margin-bottom: 0;
-}
-
-.active {
-    color: #6772e5;
 }
 
 .dataset-name {

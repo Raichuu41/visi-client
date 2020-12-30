@@ -93,7 +93,6 @@
                                     {{ snap.snapshot_name }}
                                 </div>
                             </div>
-                            <div class="description-small">{{ `${new Date(snap.created_at).toDateString()}` }}</div>
                             <div class="description-small">{{ `Created: ${snap.created_at}` }}</div>
                             <div class="description-small">{{ `Images: ${snap.count}` }}</div>
                             <div class="description-small">
@@ -109,7 +108,7 @@
 </template>
 
 <script>
-import {apiUrl} from '../config/apiUrl';
+import { apiUrl } from '../config/apiUrl';
 import RangeSlider from './RangeSlider';
 
 export default {
@@ -178,15 +177,15 @@ export default {
                 this.name = '';
             } else {
                 this.selectedDataset = id;
-                const {size, name} = this.datasets.find(e => e.id === this.selectedDataset);
+                const { size, name } = this.datasets.find(e => e.id === this.selectedDataset);
                 this.name = name;
                 this.maxCount = size;
                 this.imgCount = size < 500 ? size : 500;
             }
         },
-        changeImgCount({target}) {
+        changeImgCount({ target }) {
             console.log('changeImgCount');
-            const {size} = this.datasets.find(e => e.id === this.selectedDataset);
+            const { size } = this.datasets.find(e => e.id === this.selectedDataset);
             // console.log(target.value);
             // console.log(size, this.selectedDataset);
             this.imgCount = +target.value <= size ? +target.value : size; // < 500 ? 500 : +target.value;
