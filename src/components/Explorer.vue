@@ -85,7 +85,7 @@
             </div>
         </div>
 
-        <div class="details">
+        <div class="details right">
             <div class="area help-box" v-if="showHelp && !neighbourMode">
                 <!--                <div class="title2">Create groups for learning own embedding</div>-->
                 <div class="title2">Help: General usage</div>
@@ -1078,11 +1078,14 @@ export default {
             this.store.save();
         },
 
+        getNewGroupId() {
+            return this.savedGroups.length + 1;
+        },
         saveGroup() {
             logYellow('saveGroup');
             // save the actually group
-            this.groupCounter += 1;
-            const groupId = this.groupCounter;
+            // this.groupCounter += 1;
+            const groupId = this.getNewGroupId();
 
             // get the name
             const name = this.groupName || `Group ${groupId}`;

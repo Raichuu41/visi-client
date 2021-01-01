@@ -6,7 +6,7 @@ import VueEvaInput from 'vue-eva-input';
 import App from './App';
 import router from './router';
 import './index.css';
-import vuetify from '@/plugins/vuetify';
+// import vuetify from '@/plugins/vuetify';
 
 Vue.use(VueEvaInput);
 Vue.use(Notifications);
@@ -18,5 +18,5 @@ Vue.config.productionTip = false;
 new Vue({
     render: h => h(App),
     router,
-    vuetify,
+    // vuetify,
 }).$mount('#app');

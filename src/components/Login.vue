@@ -18,10 +18,10 @@
                                type="password"
                                v-model="password" />
                 </label>
-                <v-btn :class="{ active: loading }"
+                <button :class="{ active: loading }"
                        :disabled="verifyInput()"
                        class="btn margin"
-                    type="submit">login</v-btn>
+                    type="submit">login</button>
                 <div class="title" style="color: red" v-if="error">{{ error }}</div>
                 <div class="title" style="color: red" v-if="loading">Loading...</div>
             </div>
