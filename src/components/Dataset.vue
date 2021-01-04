@@ -226,7 +226,7 @@ export default {
 
         async selectSnapshot(snapshotId) {
             console.log('selectSnapshot', snapshotId);
-            const response = await fetch(`${apiUrl}/api/v1/snapshots/load?snapshot=${snapshotId}`);
+            const response = await fetch(`${apiUrl}/api/v1/snapshots/load?snapshot=${snapshotId}&userid=${this.userId}`);
             if (!response.ok) {
                 this.$notify({
                     group: 'default',
@@ -240,7 +240,7 @@ export default {
             console.log('received snapshot data successfully');
             this.handleChangeDataset(
                 snapshotData.dataset, this.name, snapshotData.count, snapshotData.nodes,
-                snapshotData.groups,
+                snapshotData.groups, snapshotData.modelChanged,
             );
         },
     },

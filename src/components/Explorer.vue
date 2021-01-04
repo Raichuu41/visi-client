@@ -529,6 +529,7 @@ export default {
         isAuth: Boolean,
         groupsFromSnapshot: Array,
         nodesFromSnapshot: Object,
+        modelChanged: Boolean,
     },
     components: {
         Scissors,
@@ -740,6 +741,7 @@ export default {
         updateEmbedding(data) {
             logYellow('Socket: updateEmbedding');
             console.log(data);
+            this.modelChanged = true; // model had been updated at least once
             // not every handler sends a cb
             // if (cb) cb({ stopped: this.autoUpdateEmbedding });
             if (!this.loadingImgs) {
@@ -1350,6 +1352,7 @@ export default {
             const { dataset } = this;
             const count = this.selectedImgCount;
             const userid = this.userId;
+            const modelChanged = this.modelChanged;
             // dont save if there not all nodes loaded
             if (!Object.keys(nodes).length || this.loadingImgs) {
                 return this.$notify({
@@ -1370,6 +1373,7 @@ export default {
                     count,
                     userid,
                     snapshotName,
+                    modelChanged,
                 }),
             })
                 .then(res => res.json())

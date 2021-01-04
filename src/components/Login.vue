@@ -1,7 +1,7 @@
 <template>
     <div class="body">
         <form id="loginForm"
-        @submit="login">
+        @submit="login()">
             <div class="area login">
                 <label>
                     <div class="title login">Username</div>
