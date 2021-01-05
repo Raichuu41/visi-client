@@ -1,11 +1,12 @@
 <template>
     <div id="app">
-        <nav-header
+        <nav-header ref="navigation"
             :isAuth="isAuth"
             :wasmMode="wasmMode"
             :toggleWasmMode="toggleWasmMode"
             :name="datasetName"
             :userName="this.userName"
+            :userId="userId"
         />
 
         <router-view
@@ -78,6 +79,7 @@ export default {
         },
         logout() {
             console.log('Logout');
+            this.$refs.navigation.resetTemporaryModel();
             this.isAuth = false;
             this.userId = null;
             this.userName = null;

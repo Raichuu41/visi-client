@@ -81,6 +81,7 @@ import Database from '../icons/Database';
 import Save from '../icons/Save';
 import Settings from '../icons/Settings';
 import { DATASET } from '@/util/modes';
+import apiUrl from "@/config/apiUrl";
 // import bus from '../EventBus';
 
 export default {
@@ -99,6 +100,7 @@ export default {
         isAuth: Boolean,
         name: String,
         userName: String,
+        userId: Number,
     },
     data: () => ({
         loading: false,
@@ -124,7 +126,18 @@ export default {
                 this.snapshotName = '';
             }
         },
-
+        async resetTemporaryModel() {
+            const res = await fetch(`${apiUrl}/api/v1/snapshots/resetTempModel?userid=${this.userId}`);
+            console.log(res);
+            if (!res.ok) {
+                this.$notify({
+                    group: 'default',
+                    title: 'Error resetting temporary model',
+                    type: 'error',
+                    text: res.statusText,
+                });
+            }
+        },
         updateEmbedding() {
             console.log('updateEmbedding');
             console.log(this.$root.explorer);
@@ -164,6 +177,7 @@ export default {
                     {
                         title: 'Ok',
                         handler: () => {
+                            this.resetTemporaryModel();
                             this.$modal.hide('dialog');
                             this.$router.push({ name: DATASET });
                         },

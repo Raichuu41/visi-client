@@ -47,22 +47,22 @@
                 </div>
             </div>
             <div v-if="startNew" class="">
-                <div class="header">2. Select subset or load all images</div>
+                <div class="header">3. Select subset or load all images</div>
                 <div class="row">
                     <range-slider
                         :change="changeImgCount"
-                        :max="10000"
+                        :max="maxCount"
                         :min="500"
-                        :step="500"
+                        :step="1"
                         :value="imgCount"
                     ></range-slider>
-                    <div class="description">{{ `${imgCount}/${maxCount}#` }}</div>
+                    <div class="description">{{ `${imgCount}/${maxCount}` }}</div>
                     <!--                        <div class="btn">all</div>-->
                 </div>
             </div>
             <div v-if="startNew">
                 <div class="header">
-                    3. Resume last session or start new one
+                    4. Start a new session
                 </div>
                 <div class="flex">
                     <div @click="startLoadingNewDataset()" class="btn">start</div>
@@ -81,6 +81,9 @@
                     <div class="loader" v-if="loadingSnapshots"></div>
                 </div>
                 <div class="items" v-if="!loadingSnapshots">
+                    <div class="description-small" v-if="snapshots.length === 0">
+                        There are no saved snapshots!
+                    </div>
                     <div
                         class="btn btn-item"
                         :key="snap.snapshot_id"
@@ -175,8 +178,12 @@ export default {
             if (this.selectedDataset === id) {
                 this.selectedDataset = null;
                 this.name = '';
+                this.startNew = false;
+                this.useSnapshots = false;
             } else {
                 this.selectedDataset = id;
+                this.startNew = false;
+                this.useSnapshots = false;
                 const { size, name } = this.datasets.find(e => e.id === this.selectedDataset);
                 this.name = name;
                 this.maxCount = size;
@@ -293,5 +300,9 @@ export default {
 .loading {
     display: flex;
     justify-content: center;
+}
+
+.slider-input {
+    font-size: 12px;
 }
 </style>
