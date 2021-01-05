@@ -3,21 +3,17 @@
         <form id="loginForm"
         @submit="login()">
             <div class="area login">
-                <label>
-                    <div class="title login">Username</div>
-                    <eva-input class="login-fields"
-                        placeholder="Your username..."
-                        :status="user ? 'success' : 'danger'"
-                        v-model="user" />
-                </label>
-                <label>
-                    <div class="title login">Password</div>
-                    <eva-input class="login-fields"
-                               placeholder="Your password..."
-                               :status="password ? 'success' : 'danger'"
-                               type="password"
-                               v-model="password" />
-                </label>
+                <div class="title login">Username</div>
+                <eva-input id="loginUser" class="login-fields"
+                    placeholder="Your username..." focus-placeholder="Enter your username..."
+                    :status="user ? 'success' : 'danger'"
+                    v-model="user" />
+                <div class="title login">Password</div>
+                <eva-input class="login-fields"
+                           placeholder="Your password..." focus-placeholder="Enter your password..."
+                           :status="password ? 'success' : 'danger'"
+                           type="password"
+                           v-model="password" />
                 <button :class="{ active: loading }"
                        :disabled="verifyInput()"
                        class="btn margin"
@@ -45,7 +41,10 @@ export default {
         verifyInput() {
             return (!this.user || !this.password);
         },
-
+        focusInput() {
+            const input = document.getElementById('loginUser');
+            input.focus();
+        },
         async login() {
             this.loading = true; // start loading
             // console.log('Login :', this.user, this.password);
@@ -89,6 +88,9 @@ export default {
             this.loading = false;
             // if (process.env.NODE_ENV === 'development') this.setAuth(0);
         },
+    },
+    mounted() {
+        this.focusInput();
     },
 };
 </script>
