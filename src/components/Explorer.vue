@@ -475,10 +475,10 @@
 </template>
 
 <script>
-import io from 'socket.io-client';
 import simpleheat from 'simpleheat';
 import { Slider } from 'vue-color';
 import { instantiateStreaming } from 'assemblyscript/lib/loader';
+import socket from '../util/socketBackend';
 import Node from '../util/Node';
 import ExplorerState from '../util/ExplorerState';
 import groupColors from '../config/groupColors';
@@ -685,7 +685,7 @@ export default {
                 const nodes = this.store.getNodes();
                 // this.store.resetStore();
                 this.updateNodes = true;
-                this.socket.emit('updateEmbedding', {
+                socket.emit('updateEmbedding', {
                     nodes,
                     datasetId: this.dataset,
                     userId: this.userId,
@@ -1306,7 +1306,7 @@ export default {
                 });
             } else {
                 console.log('Emit: saveSnapshot');
-                this.socket.emit('saveSnapshot', {
+                socket.emit('saveSnapshot', {
                     nodes,
                     groups,
                     dataset,
@@ -1444,25 +1444,20 @@ export default {
             }
         }
 
-        const socketIp = process.env.NODE_ENV === 'production' ? '/' : 'localhost:3000';
-        const socketPath = process.env.NODE_ENV === 'production' ? '/visiexp/socket.io' : '';
-
-        // init socket connection
-        const socket = io.connect(socketIp, {
-            transports: ['websocket'],
-            reconnectionDelay: 100,
-            reconnectionDelayMax: 1000,
-            path: socketPath,
-        });
+        // const socketIp = process.env.NODE_ENV === 'production' ? '/' : 'localhost:3000';
+        // const socketPath = process.env.NODE_ENV === 'production' ? '/visiexp/socket.io' : '';
+        //
+        // // init socket connection
+        // const socket = io.connect(socketIp, {
+        //     transports: ['websocket'],
+        //     reconnectionDelay: 100,
+        //     reconnectionDelayMax: 1000,
+        //     path: socketPath,
+        // });
 
         const hitCanvas = document.createElement('canvas');
         hitCanvas.width = parantWidth;
         hitCanvas.height = parantHeight;
-
-        // const heatmapCanvas = document.getElementById('heatmap');
-        // heatmapCanvas.width = parantWidth / 4;
-        // heatmapCanvas.height = parantHeight / 4;
-        // this.heatmap = simpleheat(heatmapCanvas); // todo why is it grey/unused?
 
         const navHeatmapCanvas = document.getElementById('navHeatmap');
         navHeatmapCanvas.width = parantWidth / 4;
@@ -1488,22 +1483,17 @@ export default {
         this.sizeRange = store.sizeRange;
         this.scale = store.scale;
 
-        // save socket to ui
-        this.socket = socket;
-
-        socket.on('connect', () => {
-            logYellow('Socket: connect');
-            this.connectedToSocket = true;
-            // notification
-            this.$notify({
-                group: 'default',
-                title: 'Connected',
-                type: 'success',
-                // text: 'Hello user! This is a notification!'
-            });
-            console.log('Socket: connect');
-            console.log(`Socket id: ${socket.id}`);
-            // console.log(socket);
+        if (socket.connected) {
+            // logYellow('Socket: connect');
+            // this.connectedToSocket = true;
+            // // notification
+            // this.$notify({
+            //     group: 'default',
+            //     title: 'Connected',
+            //     type: 'success',
+            // });
+            // console.log('Socket: connect');
+            // console.log(`Socket id: ${socket.id}`);
             this.socketId = socket.id;
             // there are already data then this is just a reconnect
             const nodes = this.store.getNodes();
@@ -1525,8 +1515,7 @@ export default {
                     text: `start loading data for ${this.selectedImgCount} images`,
                 });
             }
-        });
-
+        }
         socket.on('Error', (data) => {
             logYellow('Socket: Error');
             console.error('Server response with error:');
@@ -1798,7 +1787,7 @@ export default {
     },
     beforeDestroy() {
         // end connection with server socket
-        if (this.socket) this.socket.disconnect();
+        // if (this.socket) this.socket.disconnect();
         window.removeEventListener('resize', this.handleResize);
         // EventBus.$off('update', this.sendData);
         this.$root.navheader.explorer = false;
