@@ -228,15 +228,6 @@
                         </div>
                     </div>
                 </div>
-                <!--<div class="option-title">Other</div>
-                    <div class="row-btn">
-                        <div>zoomStage: {{ zoomStage }}</div>
-                        <div class="row">
-                            <div @click="changeZoomStage(-1)" class="btn"><minus></minus></div>
-                            <div @click="changeZoomStage(1)" class="btn"><plus></plus></div>
-                        </div>
-                    </div>-->
-
                 <div class="option-title">Heatmap</div>
                 <div class="row-btn">
                     <div>Radius: {{ heatmapRadius }}</div>
@@ -717,24 +708,7 @@ export default {
         },
 
         handleUpdateEmbedding() {
-            this.$modal.show('updateDialog', {
-                // title: 'Update embedding?',
-                // text: 'It will take a while until the embedding has been updated.',
-                // buttons: [
-                //     {
-                //         title: 'Ok',
-                //         handler: () => {
-                //             this.sendData();
-                //             this.$modal.hide('updateDialog');
-                //         },
-                //     },
-                //     {
-                //         title: 'Cancel',
-                //         default: true, // Will be triggered by default if 'Enter' pressed.
-                //         // handler: () => {}, // Button click handler
-                //     },
-                // ],
-            });
+            this.$modal.show('updateDialog', {});
         },
 
         // called from socket.on('updateEmbedding')
@@ -802,11 +776,6 @@ export default {
             this.clusterRadius = this.store.clusterRadius;
         },
 
-        // changeClusterTile(v) {
-        //     this.store.clusterTile += v; // update ui
-        //     this.clusterTile = this.store.clusterTile;
-        // },
-
         toggleRecalcClustering() {
             this.recalcClustering = !this.recalcClustering;
             if (this.recalcClustering) this.store.createCluster();
@@ -821,32 +790,6 @@ export default {
             this.groupBorderAllActive = !this.groupBorderAllActive;
             this.store.triggerDraw();
         },
-
-        // drawHeatmap() {
-        //     console.time('drawHeatmap');
-        //     const { heatmap } = this;
-        //
-        //     // data in form of [[x,y,v], [x,y,v], ...]
-        //     const data = Object.values(this.store.getNodes()).map((node) => {
-        //         const x = (node.x * this.store.scale + this.store.translateX) / 4;
-        //         const y = (node.y * this.store.scale + this.store.translateY) / 4;
-        //         return [x, y, 1];
-        //     });
-        //
-        //     // refresh radius before drawing
-        //     heatmap.radius(this.heatmapRadius, this.heatmapBlur);
-        //
-        //     // add data
-        //     heatmap.data(data); // setting data clear the old one
-        //
-        //     // draw heatmap
-        //     heatmap.draw(/* this.heatmapMinOpacity */);
-        //     console.timeEnd('drawHeatmap');
-        // },
-
-        /*
-         *  HEAT MAP
-         */
 
         drawNavHeatmap() {
             console.time('drawNavHeatmap');
@@ -1345,28 +1288,25 @@ export default {
             navHeatmap.width = parantWidth / 4;
             navHeatmap.height = parantHeight / 4;
         },
-        async saveSnapshot(snapshotName) {
+        saveSnapshot(snapshotName) {
             console.log('saveSnapshot');
             const nodes = this.store.getNodes();
             const groups = this.savedGroups;
             const { dataset } = this;
             const count = this.selectedImgCount;
             const userid = this.userId;
-            const modelChanged = this.modelChanged;
+            const { modelChanged } = this;
             // dont save if there not all nodes loaded
             if (!Object.keys(nodes).length || this.loadingImgs) {
-                return this.$notify({
+                this.$notify({
                     group: 'default',
                     title: 'Cannot save before finish loading',
                     type: 'error',
                     text: 'Please wait until all images are loaded',
                 });
-            }
-
-            const data = await fetch(`${apiUrl}/api/v1/snapshots/`, {
-                method: 'POST',
-                headers: { 'Content-type': 'application/json' },
-                body: JSON.stringify({
+            } else {
+                console.log('Emit: saveSnapshot');
+                this.socket.emit('saveSnapshot', {
                     nodes,
                     groups,
                     dataset,
@@ -1374,23 +1314,28 @@ export default {
                     userid,
                     snapshotName,
                     modelChanged,
-                }),
-            })
-                .then(res => res.json())
-                .catch((e) => {
-                    this.$notify({
-                        group: 'default',
-                        title: 'Error saving snapshot',
-                        type: 'error',
-                        text: e.message,
-                    });
                 });
-            this.$notify({
-                group: 'default',
-                title: `Snapshot "${snapshotName}" saved`,
-                type: 'success',
-                text: data.message,
-            });
+            }
+        },
+        saveSnapshotOn(data) {
+            console.log('Socket on: BE-saveSnapshot');
+            const { status } = data;
+            const { snapshotName } = data;
+            if (status === 'success') {
+                this.$notify({
+                    group: 'default',
+                    title: 'Snapshot saved',
+                    type: 'success',
+                    text: `Successfully saved snapshot ${snapshotName}`,
+                });
+            } else {
+                this.$notify({
+                    group: 'default',
+                    title: 'Error saving snapshot',
+                    type: 'error',
+                    text: `Failed to save snapshot ${snapshotName}`,
+                });
+            }
         },
     },
 
@@ -1797,6 +1742,7 @@ export default {
         });
 
         socket.on('updateEmbedding', this.updateEmbedding);
+        socket.on('BE-saveSnapshot', this.saveSnapshotOn);
 
         socket.on('initPython', (data) => {
             if (data.done) {
