@@ -1,7 +1,8 @@
 <template>
     <div class="body">
         <form id="loginForm"
-        @submit="login()">
+        @submit="login()"
+        @submit.prevent>
             <div class="area login">
                 <div class="title login">Username</div>
                 <eva-input id="loginUser" class="login-fields"
@@ -27,6 +28,7 @@
 
 <script>
 import { apiUrl } from '@/config/apiUrl';
+import socket from '@/util/socketBackend';
 
 export default {
     name: 'Login',
@@ -45,52 +47,39 @@ export default {
             const input = document.getElementById('loginUser');
             input.focus();
         },
-        async login() {
-            this.loading = true; // start loading
-            // console.log('Login :', this.user, this.password);
-            this.error = ''; // reset error
-
-            try {
-                const body = {
-                    user: this.user,
-                    password: this.password,
-                };
-                const res = await fetch(`${apiUrl}/api/v1/login`, {
-                    method: 'POST',
-                    headers: { 'Content-type': 'application/json' },
-                    body: JSON.stringify(body),
-                });
-                console.log(res);
-                if (!res.ok) throw Error(res.statusText);
-                const data = await res.json();
-
-                if (data.isAuth) {
-                    this.setAuth(data.id, data.user);
-                    this.$notify({
-                        group: 'default',
-                        title: 'Login successful',
-                        type: 'success',
-                    });
-                } else {
-                    throw Error(data.message);
-                }
-            } catch (e) {
-                this.error = e.message;
-                console.log(e);
-                console.log(e.message);
+        loginOn(data) {
+            console.log('Socket on: BE-login');
+            if (data.status === 'success') {
+                this.setAuth(data.id, data.user);
                 this.$notify({
                     group: 'default',
-                    title: 'Error log in',
+                    title: 'Login successful',
+                    type: 'success',
+                });
+            } else {
+                this.error = data.error;
+                this.$notify({
+                    group: 'default',
+                    title: 'Error on login',
                     type: 'error',
-                    text: e.message,
+                    text: data.error,
                 });
             }
             this.loading = false;
-            // if (process.env.NODE_ENV === 'development') this.setAuth(0);
+        },
+        login() {
+            this.loading = true;
+            this.error = '';
+            const body = {
+                user: this.user,
+                password: this.password,
+            };
+            socket.emit('login', body);
         },
     },
     mounted() {
         this.focusInput();
+        socket.on('BE-login', this.loginOn);
     },
 };
 </script>
