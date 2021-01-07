@@ -478,7 +478,6 @@
 import simpleheat from 'simpleheat';
 import { Slider } from 'vue-color';
 import { instantiateStreaming } from 'assemblyscript/lib/loader';
-import socket from '../util/socketBackend';
 import Node from '../util/Node';
 import ExplorerState from '../util/ExplorerState';
 import groupColors from '../config/groupColors';
@@ -549,7 +548,7 @@ export default {
     },
     data: () => ({
         // store: null,
-        socket: null,
+        allListeners: [],
         snapshotName: '',
         connectedToSocket: false,
         showSettings: false,
@@ -685,7 +684,7 @@ export default {
                 const nodes = this.store.getNodes();
                 // this.store.resetStore();
                 this.updateNodes = true;
-                socket.emit('updateEmbedding', {
+                this.$beSocket.emit('updateEmbedding', {
                     nodes,
                     datasetId: this.dataset,
                     userId: this.userId,
@@ -1306,7 +1305,7 @@ export default {
                 });
             } else {
                 console.log('Emit: saveSnapshot');
-                socket.emit('saveSnapshot', {
+                this.$beSocket.emit('saveSnapshot', {
                     nodes,
                     groups,
                     dataset,
@@ -1471,7 +1470,7 @@ export default {
         navHeatmapRect.getContext('2d').lineWidth = 1.5;
         this.navHeatmapRect = navHeatmapRect;
 
-        const store = new ExplorerState(canvas, hitCanvas, socket, this);
+        const store = new ExplorerState(canvas, hitCanvas, this.$beSocket, this);
         this.store = store;
 
         // set init value from store to UI
@@ -1483,7 +1482,7 @@ export default {
         this.sizeRange = store.sizeRange;
         this.scale = store.scale;
 
-        if (socket.connected) {
+        if (this.$beSocket.connected) {
             // logYellow('Socket: connect');
             // this.connectedToSocket = true;
             // // notification
@@ -1494,13 +1493,13 @@ export default {
             // });
             // console.log('Socket: connect');
             // console.log(`Socket id: ${socket.id}`);
-            this.socketId = socket.id;
+            this.socketId = this.$beSocket.id;
             // there are already data then this is just a reconnect
             const nodes = this.store.getNodes();
             console.log('nodes in store while connect (its maybe just a reconnect)');
             console.log(nodes);
             if (!Object.keys(nodes).length && !this.updateNodes) {
-                socket.emit('getNodes', {
+                this.$beSocket.emit('getNodes', {
                     datasetId: this.dataset,
                     userId: this.userId,
                     count: this.selectedImgCount,
@@ -1516,7 +1515,8 @@ export default {
                 });
             }
         }
-        socket.on('Error', (data) => {
+        this.allListeners.push('Error');
+        this.$beSocket.on('Error', (data) => {
             logYellow('Socket: Error');
             console.error('Server response with error:');
             console.error(data.message);
@@ -1533,8 +1533,8 @@ export default {
                 });
             }
         });
-
-        socket.on('disconnect', (reason) => {
+        this.allListeners.push('disconnect');
+        this.$beSocket.on('disconnect', (reason) => {
             logYellow('Socket: disconnect');
             this.connectedToSocket = false;
             this.$notify({
@@ -1547,7 +1547,8 @@ export default {
         });
 
         // get a new node from server
-        socket.on('node', (data) => {
+        this.allListeners.push('node');
+        this.$beSocket.on('node', (data) => {
             logYellow('Socket: node');
             if (data.index % 100 === 0) {
                 console.log(`Socket: node ${data.index}`);
@@ -1559,22 +1560,22 @@ export default {
             store.addNode(new Node(data));
             store.triggerDraw();
         });
-
-        socket.on('requestImage', (data) => {
+        this.allListeners.push('requestImage');
+        this.$beSocket.on('requestImage', (data) => {
             logYellow('Socket: requestImage');
             console.log(data);
             const node = store.nodes[data.index];
             // console.log(node);
             node.image.src = `data:image/jpeg;base64,${data.buffer}`;
         });
-
-        socket.on('totalNodesCount', (data) => {
+        this.allListeners.push('totalNodesCount');
+        this.$beSocket.on('totalNodesCount', (data) => {
             logYellow('Socket: totalNodesCount');
             console.log(data);
             this.nodesTotal = data.count;
         });
-
-        socket.on('sendAllNodes', async ({ nodes, time }) => {
+        this.allListeners.push('sendAllNodes');
+        this.$beSocket.on('sendAllNodes', async ({ nodes, time }) => {
             logYellow('Socket: sendAllNodes');
             this.$notify({
                 group: 'default',
@@ -1723,17 +1724,18 @@ export default {
             this.loadingImgs = false;
             console.timeEnd('loadAllNodes');
         });
-
-        socket.on('updateCategories', (data) => {
+        this.allListeners.push('updateCategories');
+        this.$beSocket.on('updateCategories', (data) => {
             logYellow('Socket: updateCategories');
             console.log(data);
             this.labels = data.labels;
         });
-
-        socket.on('updateEmbedding', this.updateEmbedding);
-        socket.on('BE-saveSnapshot', this.saveSnapshotOn);
-
-        socket.on('initPython', (data) => {
+        this.allListeners.push('updateEmbedding');
+        this.$beSocket.on('updateEmbedding', this.updateEmbedding);
+        this.allListeners.push('BE-saveSnapshot');
+        this.$beSocket.on('BE-saveSnapshot', this.saveSnapshotOn);
+        this.allListeners.push('initPython');
+        this.$beSocket.on('initPython', (data) => {
             if (data.done) {
                 this.initPython = data.done;
                 this.$notify({
@@ -1746,8 +1748,8 @@ export default {
                 });
             }
         });
-
-        socket.on('connect_error', () => {
+        this.allListeners.push('connect_error');
+        this.$beSocket.on('connect_error', () => {
             logYellow('Socket: connect_error');
             this.$notify({
                 group: 'default',
@@ -1756,38 +1758,39 @@ export default {
                 text: 'Trying to reconnect',
             });
         });
-
-        socket.on('connect_timeout', () => {
+        this.allListeners.push('connect_timeout');
+        this.$beSocket.on('connect_timeout', () => {
             logYellow('Socket: connect_timeout');
         });
-
-        socket.on('reconnect', () => {
+        this.allListeners.push('reconnect');
+        this.$beSocket.on('reconnect', () => {
             logYellow('Socket: reconnect');
         });
-
-        socket.on('connecting', () => {
+        this.allListeners.push('connecting');
+        this.$beSocket.on('connecting', () => {
             logYellow('Socket: connecting');
         });
-
-        socket.on('Socket: reconnecting', () => {
+        this.allListeners.push('Socket: reconnecting');
+        this.$beSocket.on('Socket: reconnecting', () => {
             logYellow('reconnecting');
         });
-
-        socket.on('connect_failed', () => {
+        this.allListeners.push('connect_failed');
+        this.$beSocket.on('connect_failed', () => {
             logYellow('Socket: connect_failed');
         });
-
-        socket.on('reconnect_failed', () => {
+        this.allListeners.push('reconnect_failed');
+        this.$beSocket.on('reconnect_failed', () => {
             logYellow('Socket: reconnect_failed');
         });
-
-        socket.on('close', () => {
+        this.allListeners.push('close');
+        this.$beSocket.on('close', () => {
             logYellow('Socket: close');
         });
     },
     beforeDestroy() {
         // end connection with server socket
         // if (this.socket) this.socket.disconnect();
+        this.allListeners.forEach(listener => this.$beSocket.removeListener(listener));
         window.removeEventListener('resize', this.handleResize);
         // EventBus.$off('update', this.sendData);
         this.$root.navheader.explorer = false;

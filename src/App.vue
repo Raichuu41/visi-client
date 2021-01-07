@@ -101,6 +101,9 @@ export default {
         // the init route isn't checked, so do it here on mount
         if (!this.isAuth && this.$route.path !== `/${LOGIN}`) this.$router.push({ name: LOGIN });
     },
+    beforeDestroy() {
+        console.log('APP DESTROYED');
+    },
 };
 </script>
 

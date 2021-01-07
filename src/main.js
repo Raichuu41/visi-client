@@ -6,6 +6,7 @@ import VueEvaInput from 'vue-eva-input';
 import App from './App';
 import router from './router';
 import './index.css';
+import socket from '@/util/socketBackend';
 // import vuetify from '@/plugins/vuetify';
 
 Vue.use(VueEvaInput);
@@ -13,7 +14,9 @@ Vue.use(Notifications);
 Vue.use(VTooltip, { defaultDelay: 500, defaultPlacement: 'bottom' });
 Vue.use(VModal, { dialog: true, dynamic: true, injectModalsContainer: true });
 
+
 Vue.config.productionTip = false;
+Vue.prototype.$beSocket = socket;
 
 new Vue({
     render: h => h(App),

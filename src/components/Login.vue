@@ -27,12 +27,13 @@
 </template>
 
 <script>
-import { apiUrl } from '@/config/apiUrl';
-import socket from '@/util/socketBackend';
 
 export default {
     name: 'Login',
-    props: ['setAuth'],
+    props: {
+        setAuth: Function,
+        socket: Object,
+    },
     data: () => ({
         user: '',
         password: '',
@@ -74,12 +75,15 @@ export default {
                 user: this.user,
                 password: this.password,
             };
-            socket.emit('login', body);
+            this.$beSocket.emit('login', body);
         },
     },
     mounted() {
+        this.$beSocket.on('BE-login', this.loginOn);
         this.focusInput();
-        socket.on('BE-login', this.loginOn);
+    },
+    beforeDestroy() {
+        this.$beSocket.removeListener('BE-login');
     },
 };
 </script>
