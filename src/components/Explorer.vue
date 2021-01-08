@@ -505,7 +505,7 @@ import RangeSlider from './RangeSlider';
 import { apiUrl } from '../config/apiUrl';
 // import wasm from '../assets/wasm/optimized.wasm';
 import { logYellow } from '../util/logging';
-// import bus from '../EventBus';
+import { eventBus } from '@/EventBus';
 
 export default {
     store: null,
@@ -1493,6 +1493,7 @@ export default {
             // });
             // console.log('Socket: connect');
             // console.log(`Socket id: ${socket.id}`);
+            eventBus.$emit('set-loading', true);
             this.socketId = this.$beSocket.id;
             // there are already data then this is just a reconnect
             const nodes = this.store.getNodes();
@@ -1676,11 +1677,12 @@ export default {
                         this.offset = this.allocNewMemory(+contentLength);
                     }
                     await consume(res.body.getReader());
-
                     // show heatmap
+                    console.log('draw heatmap');
                     this.toggleShowNavHeatmap();
                 })
                 .then(() => {
+                    console.log('finished loading all images');
                     this.$notify({
                         group: 'default',
                         title: 'Finish loading images',
@@ -1719,7 +1721,8 @@ export default {
                     console.log(this.wasm);
                     console.log(this);
                 });
-
+            console.log('set loading false');
+            eventBus.$emit('set-loading', false);
             this.updateNodes = false;
             this.loadingImgs = false;
             console.timeEnd('loadAllNodes');

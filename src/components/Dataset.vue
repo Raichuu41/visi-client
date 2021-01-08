@@ -113,6 +113,7 @@
 <script>
 import { apiUrl } from '../config/apiUrl';
 import RangeSlider from './RangeSlider';
+import { eventBus } from '@/EventBus';
 
 export default {
     name: 'Dataset',
@@ -144,7 +145,7 @@ export default {
         };
     },
     async mounted() {
-        this.loading = true;
+        eventBus.$emit('set-loading', true);
         try {
             console.log('load dataset after mounting');
             const res = await fetch(`${apiUrl}/api/v1/dataset/all`);
@@ -170,7 +171,7 @@ export default {
                 text: e.message,
             });
         }
-        this.loading = false;
+        eventBus.$emit('set-loading', false);
     },
     methods: {
         selectDataset(id) {

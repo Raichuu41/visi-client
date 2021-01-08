@@ -1,5 +1,10 @@
 <template>
     <div id="app">
+        <orbit-spinner v-if="this.displayLoading" class="custom-loading"
+                       :animation-duration="1200"
+                       :size="180"
+                       color="#0086FF"
+        />
         <nav-header ref="navigation"
             :isAuth="isAuth"
             :wasmMode="wasmMode"
@@ -7,9 +12,11 @@
             :name="datasetName"
             :userName="this.userName"
             :userId="userId"
+            :displayLoading="displayLoading"
         />
 
         <router-view
+            :class="this.displayLoading ? 'loading-shown' : ''"
             ref="router"
             :key="dataset + selectedImgCount + wasmMode"
             :setAuth="setAuth"
@@ -24,6 +31,7 @@
             :nodesFromSnapshot="nodesFromSnapshot"
             :groupsFromSnapshot="groupsFromSnapshot"
             :modelChanged="modelChanged"
+            :displayLoading="displayLoading"
         />
 
         <v-dialog />
@@ -32,14 +40,16 @@
 </template>
 
 <script>
+import { OrbitSpinner } from 'epic-spinners';
 import NavHeader from './components/NavHeader';
 import Login from './components/Login';
 import { DATASET, LOGIN } from './util/modes';
 import { logYellow } from './util/logging';
+import { eventBus } from '@/EventBus';
 
 export default {
     name: 'App',
-    components: { NavHeader, Login },
+    components: { NavHeader, Login, OrbitSpinner },
     // maybe here is a good place to reset component...
     data: () => ({
         dataset: null, // todo reset to 001
@@ -52,12 +62,13 @@ export default {
         nodesFromSnapshot: null,
         groupsFromSnapshot: null,
         modelChanged: false,
+        displayLoading: false,
     }),
     methods: {
         switchDataset(newDataset, name, count, nodes = null, groups = null, modelChanged = false) {
             logYellow('switchDataset - trigger explorer reload ');
-            console.log(newDataset, name, count, groups, nodes);
-            console.log(newDataset, count);
+            // console.log(newDataset, name, count, groups, nodes);
+            // console.log(newDataset, count);
             this.dataset = newDataset;
             this.nodesFromSnapshot = nodes;
             this.groupsFromSnapshot = groups;
@@ -71,7 +82,7 @@ export default {
             this.isAuth = true;
             this.userId = userId;
             this.userName = userName;
-            console.log('Auth set: ', this.isAuth);
+            // console.log('Auth set: ', this.isAuth);
             this.$router.push(`/${DATASET}`);
         },
         toggleWasmMode() {
@@ -83,16 +94,21 @@ export default {
             this.isAuth = false;
             this.userId = null;
             this.userName = null;
+            this.displayLoading = false;
             this.$router.push({ name: LOGIN });
         },
         checkRoute(to, from, next) {
             this.$nextTick(function() {
-                console.log('check route before handling');
-                console.log({ auth: this.isAuth, to, from });
+                // console.log('check route before handling');
+                // console.log({ auth: this.isAuth, to, from });
                 // redirect to LOGIN if not auth and not already routed to /login
                 if (!this.isAuth && !to.name === LOGIN) return next({ name: LOGIN });
                 return next();
             });
+        },
+        setLoading(data) {
+            console.log(`Socket on: set-loading, data: ${data}`);
+            this.displayLoading = data;
         },
     },
     mounted() {
@@ -100,6 +116,8 @@ export default {
         this.$router.beforeHooks.push(this.checkRoute);
         // the init route isn't checked, so do it here on mount
         if (!this.isAuth && this.$route.path !== `/${LOGIN}`) this.$router.push({ name: LOGIN });
+        eventBus.$on('set-loading', this.setLoading);
+        console.log('App started');
     },
     beforeDestroy() {
         console.log('APP DESTROYED');
@@ -118,7 +136,18 @@ export default {
     width: 100%;
     margin: 0;
 }
+.loading-shown {
+    pointer-events: none;
+    opacity: 0.4;
+}
 
+.custom-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+}
 .body {
     height: calc(100% - 45px);
 }
@@ -267,4 +296,5 @@ export default {
     display: flex;
     justify-content: center;
 }
+
 </style>

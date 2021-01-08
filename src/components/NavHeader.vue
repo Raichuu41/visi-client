@@ -8,7 +8,7 @@
             <div v-if="explorer" class="dataset-name">{{ name }}</div>
         </div>
 
-        <div class="right-header">
+        <div class="right-header" :style="displayLoading ? {'pointer-events': 'none'} : ''">
             <div v-if="explorer" @click="handleDataset" class="icon" v-tooltip="'switch dataset'">
                 <database></database>
             </div>
@@ -36,7 +36,8 @@
                  v-tooltip="`Logged in as ${this.userName}`">
                 {{this.userName}}
             </div>
-            <router-link v-if="isAuth" to="/logout" v-tooltip="'logout'">
+            <router-link v-if="isAuth" to="/logout" v-tooltip="'logout'"
+            :style="{'pointer-events': 'all'}">
                 <logout></logout
             ></router-link>
         </div>
@@ -101,6 +102,7 @@ export default {
         name: String,
         userName: String,
         userId: Number,
+        displayLoading: Boolean,
     },
     data: () => ({
         loading: false,

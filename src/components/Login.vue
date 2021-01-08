@@ -5,12 +5,12 @@
         @submit.prevent>
             <div class="area login">
                 <div class="title login">Username</div>
-                <eva-input id="loginUser" class="login-fields"
+                <eva-input id="loginUser" class="login-fields" :disabled="displayLoading"
                     placeholder="Your username..." focus-placeholder="Enter your username..."
                     :status="user ? 'success' : 'danger'"
                     v-model="user" />
                 <div class="title login">Password</div>
-                <eva-input class="login-fields"
+                <eva-input class="login-fields" :disabled="displayLoading"
                            placeholder="Your password..." focus-placeholder="Enter your password..."
                            :status="password ? 'success' : 'danger'"
                            type="password"
@@ -33,6 +33,7 @@ export default {
     props: {
         setAuth: Function,
         socket: Object,
+        displayLoading: Boolean,
     },
     data: () => ({
         user: '',
