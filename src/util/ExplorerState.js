@@ -8,6 +8,7 @@ export default class ExplorerState {
         this.ui = ui;
 
         this.explorer = canvas;
+        this.spaceIsHold = false;
         this.ctx = canvas.getContext('2d');
         this.width = canvas.width;
         this.height = canvas.height;
@@ -1215,7 +1216,8 @@ export default class ExplorerState {
         this.lastY = e.offsetY;
 
         // if there is no mouse under mouse then move everything
-        if (nodeUnderMouse) {
+        // if space is hold, there will be no interaction with the image
+        if (nodeUnderMouse && !this.spaceIsHold) {
             this.draggedNode = nodeUnderMouse;
         } else if (this.scissors) {
             console.log('Scissors');

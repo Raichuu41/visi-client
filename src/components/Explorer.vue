@@ -655,6 +655,7 @@ export default {
         cachedNodes: undefined, // cache the nodes if 'updateEmbedding is faster than loading nodes
         groupBorderAllActive: false,
         embeddingDegree: 0.5,
+        spaceIsHold: false,
     }),
     methods: {
         getNode(i) {
@@ -692,6 +693,7 @@ export default {
                     count: this.selectedImgCount,
                     embeddingDegree: this.embeddingDegree,
                 });
+                eventBus.$emit('set-loading', true);
                 return this.$notify({
                     group: 'default',
                     title: 'Update embedding',
@@ -728,6 +730,7 @@ export default {
                     type: 'success',
                     text: `Update took ${data.time} seconds`,
                 });
+                eventBus.$emit('set-loading', false);
             } else {
                 logYellow('Cache nodes');
                 this.cachedNodes = data;
@@ -738,6 +741,7 @@ export default {
                     text: 'Nodes will be updated after finishing loading',
                 });
             }
+            this.drawNavHeatmap();
         },
 
         changeActiveNode(n) {
@@ -1336,6 +1340,18 @@ export default {
                 });
             }
         },
+        activateNavigationMode(e) {
+            const cmd = e.code.toLowerCase();
+            if (cmd === 'space') {
+                this.store.spaceIsHold = true;
+            }
+        },
+        deactivateNavigationMode(e) {
+            const cmd = e.code.toLowerCase();
+            if (cmd === 'space') {
+                this.store.spaceIsHold = false;
+            }
+        },
     },
 
     watch: {
@@ -1354,6 +1370,8 @@ export default {
         console.log(this.nodesFromSnapshot, this.groupsFromSnapshot);
         if (!this.isAuth) return console.error('EXPLORER WITHOUT AUTH');
         // set resize event handler
+        window.addEventListener('keydown', this.activateNavigationMode);
+        window.addEventListener('keyup', this.deactivateNavigationMode);
         window.addEventListener('resize', this.handleResize);
 
         // store state global
@@ -1689,6 +1707,7 @@ export default {
                         type: 'success',
                         text: 'all images should be visible now',
                     });
+                    eventBus.$emit('set-loading', false);
                     if (this.cachedNodes) {
                         logYellow('update embedding with cached nodes');
                         console.log(this.cachedNodes);
@@ -1722,7 +1741,6 @@ export default {
                     console.log(this);
                 });
             console.log('set loading false');
-            eventBus.$emit('set-loading', false);
             this.updateNodes = false;
             this.loadingImgs = false;
             console.timeEnd('loadAllNodes');
@@ -1795,6 +1813,8 @@ export default {
         // if (this.socket) this.socket.disconnect();
         this.allListeners.forEach(listener => this.$beSocket.removeListener(listener));
         window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('keydown', this.activateNavigationMode);
+        window.removeEventListener('keyup', this.deactivateNavigationMode);
         // EventBus.$off('update', this.sendData);
         this.$root.navheader.explorer = false;
         this.$root.explorer = null;
