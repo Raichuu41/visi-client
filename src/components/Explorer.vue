@@ -81,7 +81,7 @@
                 </div>
             </div>
             <div class="box bottom right">
-                <div :if="nodesTotal" class="btn dummy">{{ nodesRecived + '/' + nodesTotal }}</div>
+                <div :if="nodesTotal" class="btn dummy">{{ nodesReceived + '/' + nodesTotal }}</div>
             </div>
         </div>
 
@@ -555,7 +555,7 @@ export default {
         updateNodes: false,
         loadingImgs: false,
         nodesTotal: 0,
-        nodesRecived: 0,
+        nodesReceived: 0,
         initPython: false,
         scale: 0, // default - will update later
         labels: [],
@@ -959,7 +959,7 @@ export default {
         },
         reset() {
             // this.loadingNodes = true;
-            this.nodesRecived = 0;
+            this.nodesReceived = 0;
             this.nodesTotal = 0;
         },
 
@@ -1566,19 +1566,19 @@ export default {
         });
 
         // get a new node from server
-        this.allListeners.push('node');
-        this.$beSocket.on('node', (data) => {
-            logYellow('Socket: node');
-            if (data.index % 100 === 0) {
-                console.log(`Socket: node ${data.index}`);
-                console.log(data);
-            }
-            // start time measure, ended in allNodesSend
-            if (this.nodesRecived === 0) console.time('loadAllNodes');
-            this.nodesRecived += 1;
-            store.addNode(new Node(data));
-            store.triggerDraw();
-        });
+        // this.allListeners.push('node');
+        // this.$beSocket.on('node', (data) => {
+        //     logYellow('Socket: node');
+        //     if (data.index % 100 === 0) {
+        //         console.log(`Socket: node ${data.index}`);
+        //         console.log(data);
+        //     }
+        //     // start time measure, ended in allNodesSend
+        //     if (this.nodesRecived === 0) console.time('loadAllNodes');
+        //     this.nodesRecived += 1;
+        //     store.addNode(new Node(data));
+        //     store.triggerDraw();
+        // });
         this.allListeners.push('requestImage');
         this.$beSocket.on('requestImage', (data) => {
             logYellow('Socket: requestImage');
@@ -1648,12 +1648,13 @@ export default {
                                 size += 1;
                             } else {
                                 size = 0;
-                                if (nodeId % 20 === 0) state.nodesRecived += 20;
+                                // if (nodeId % 20 === 0) state.nodesReceived += 20;
+                                state.nodesReceived += 1;
                                 const node = new Node(nodes[nodeId], state.wasm);
 
                                 // own js state
                                 store.addNode(node);
-                                store.triggerDraw();
+                                // store.triggerDraw();
 
                                 if (state.wasmMode) {
                                     state.addNode(node);
@@ -1677,7 +1678,6 @@ export default {
 
                 return pump();
             }
-
             this.loadingImgs = true;
             await fetch(`${apiUrl}/api/v1/dataset/images/${this.dataset}/${this.selectedImgCount}`)
                 .then(async (res) => {
@@ -1695,6 +1695,7 @@ export default {
                         this.offset = this.allocNewMemory(+contentLength);
                     }
                     await consume(res.body.getReader());
+                    this.store.triggerDraw();
                     // show heatmap
                     console.log('draw heatmap');
                     this.toggleShowNavHeatmap();

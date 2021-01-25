@@ -17,6 +17,7 @@ export default class ExplorerState {
 
         this.valid = true; // use for checking if draw() is running
         this.nodes = {}; // hash for all nodes
+        this.displayedNodes = {}; // dictionary for all displayed nodes
         this.colorHash = {}; // find nodes by color
         this.panning = false; // Keep track of when we are dragging
         this.draggedNode = false; // save the node for dragging
@@ -275,7 +276,7 @@ export default class ExplorerState {
         }
     }
 
-    triggerDraw() {
+    triggerDraw(mainMode = false) {
         // console.log('trigger draw. valid?: ', this.valid)
         if (this.valid) window.requestAnimationFrame(() => this.draw());
         this.valid = false;
@@ -563,7 +564,6 @@ export default class ExplorerState {
 
         this.nodes[node.index] = node;
         this.colorHash[`rgb(${node.colorKey[0]},${node.colorKey[1]},${node.colorKey[2]})`] = node.index;
-        this.triggerDraw();
     }
 
     updateNodes(nodes) {
@@ -731,8 +731,9 @@ export default class ExplorerState {
             : clusterMode && repsMode
                 ? this.sortNodesReps(repsMode)
                 : Object.values(this.nodes);
-
-        nodes.forEach((node) => {
+        // todo:: filter out X nodes if length of nodes > picked slider range (from dataset selection)
+        this.displayedNodes = nodes.slice(0, 10);
+        this.displayedNodes.forEach((node) => {
             let imgSize = sizeRankedMode
                 ? zoomStage + Math.floor(node.rank * this.sizeRange)
                 : zoomStage;
