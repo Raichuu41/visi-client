@@ -276,7 +276,7 @@ export default class ExplorerState {
         }
     }
 
-    triggerDraw(mainMode = false) {
+    triggerDraw() {
         // console.log('trigger draw. valid?: ', this.valid)
         if (this.valid) window.requestAnimationFrame(() => this.draw());
         this.valid = false;
@@ -726,14 +726,17 @@ export default class ExplorerState {
         const hitmapPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
         // console.log({ explorerW, explorerH, tx, ty, scale });
 
-        const nodes = this.sorted
+        let nodes = this.sorted
             ? this.sortedNodes
             : clusterMode && repsMode
                 ? this.sortNodesReps(repsMode)
                 : Object.values(this.nodes);
         // todo:: filter out X nodes if length of nodes > picked slider range (from dataset selection)
-        this.displayedNodes = nodes.slice(0, 10);
-        this.displayedNodes.forEach((node) => {
+        if (!neighbourMode) {
+            this.displayedNodes = nodes.slice(0, 10);
+            nodes = this.displayedNodes;
+        }
+        nodes.forEach((node) => {
             let imgSize = sizeRankedMode
                 ? zoomStage + Math.floor(node.rank * this.sizeRange)
                 : zoomStage;

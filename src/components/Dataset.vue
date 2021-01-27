@@ -136,7 +136,7 @@ export default {
             // imgCount: process.env
             imgCount: this.selectedImgCount,
             maxCount: 0,
-            selectedDataset: this.dataset,
+            selectedDataset: '',
             name: '',
             snapshots: [],
             startNew: false,
