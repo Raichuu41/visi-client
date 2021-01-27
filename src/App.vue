@@ -32,6 +32,7 @@
             :groupsFromSnapshot="groupsFromSnapshot"
             :modelChanged="modelChanged"
             :displayLoading="displayLoading"
+            :displayCount="displayCount"
         />
 
         <v-dialog />
@@ -61,11 +62,13 @@ export default {
         datasetName: '',
         nodesFromSnapshot: null,
         groupsFromSnapshot: null,
+        displayCount: 0,
         modelChanged: false,
         displayLoading: false,
     }),
     methods: {
-        switchDataset(newDataset, name, count, nodes = null, groups = null, modelChanged = false) {
+        switchDataset(newDataset, name, count, nodes = null, groups = null, modelChanged = false,
+            displayCount = 5000) {
             logYellow('switchDataset - trigger explorer reload ');
             // console.log(newDataset, name, count, groups, nodes);
             // console.log(newDataset, count);
@@ -75,6 +78,7 @@ export default {
             this.selectedImgCount = count;
             this.datasetName = name;
             this.modelChanged = modelChanged;
+            this.displayCount = displayCount;
             this.$router.push('/explorer');
         },
         setAuth(userId, userName) {

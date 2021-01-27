@@ -6,7 +6,6 @@ export default class ExplorerState {
         this.socket = socket;
 
         this.ui = ui;
-
         this.explorer = canvas;
         this.spaceIsHold = false;
         this.ctx = canvas.getContext('2d');
@@ -18,6 +17,7 @@ export default class ExplorerState {
         this.valid = true; // use for checking if draw() is running
         this.nodes = {}; // hash for all nodes
         this.displayedNodes = {}; // dictionary for all displayed nodes
+        this.displayCount = ui.displayCount; // how many images to display
         this.colorHash = {}; // find nodes by color
         this.panning = false; // Keep track of when we are dragging
         this.draggedNode = false; // save the node for dragging
@@ -733,7 +733,7 @@ export default class ExplorerState {
                 : Object.values(this.nodes);
         // todo:: filter out X nodes if length of nodes > picked slider range (from dataset selection)
         if (!neighbourMode) {
-            this.displayedNodes = nodes.slice(0, 10);
+            this.displayedNodes = nodes.slice(0, this.displayCount);
             nodes = this.displayedNodes;
         }
         nodes.forEach((node) => {

@@ -81,7 +81,9 @@
                 </div>
             </div>
             <div class="box bottom right">
-                <div :if="nodesTotal" class="btn dummy">{{ nodesReceived + '/' + nodesTotal }}</div>
+                <div :if="nodesTotal" class="btn counting">
+                    {{ nodesReceived + '/' + nodesTotal }}</div>
+                <div class="btn counting">{{`Max: ${displayCount}`}}</div>
             </div>
         </div>
 
@@ -520,6 +522,7 @@ export default {
         groupsFromSnapshot: Array,
         nodesFromSnapshot: Object,
         modelChanged: Boolean,
+        displayCount: Number,
     },
     components: {
         Scissors,
@@ -2044,5 +2047,9 @@ export default {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+.btn.counting {
+    display: inline-flex !important;
+    text-align: center;
 }
 </style>

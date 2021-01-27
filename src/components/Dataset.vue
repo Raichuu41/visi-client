@@ -56,13 +56,25 @@
                         :step="1"
                         :value="imgCount"
                     ></range-slider>
-                    <div class="description">{{ `${imgCount}/${maxCount}` }}</div>
+                    <div class="description">{{ `${imgCount}/${maxCount}`}}</div>
                     <!--                        <div class="btn">all</div>-->
+                </div>
+                <div class="header">4. Set the maximum amount of images to display
+                </div>
+                <div class="row">
+                    <range-slider
+                        :change="changeDisplayCount"
+                        :max="maxCount"
+                        :min="10"
+                        :step="1"
+                        :value="defaultDisplayCount()"
+                    ></range-slider>
+                    <div class="description">{{`${defaultDisplayCount()}/${maxCount}`}}</div>
                 </div>
             </div>
             <div v-if="startNew">
                 <div class="header">
-                    4. Start a new session
+                    5. Start a new session
                 </div>
                 <div class="flex">
                     <div @click="startLoadingNewDataset()" class="btn">start</div>
@@ -135,6 +147,7 @@ export default {
             loading: false,
             // imgCount: process.env
             imgCount: this.selectedImgCount,
+            displayCount: 0,
             maxCount: 0,
             selectedDataset: '',
             name: '',
@@ -181,6 +194,7 @@ export default {
                 this.name = '';
                 this.startNew = false;
                 this.useSnapshots = false;
+                this.displayCount = 0;
             } else {
                 this.selectedDataset = id;
                 this.startNew = false;
@@ -197,6 +211,13 @@ export default {
             // console.log(target.value);
             // console.log(size, this.selectedDataset);
             this.imgCount = +target.value <= size ? +target.value : size; // < 500 ? 500 : +target.value;
+        },
+        changeDisplayCount({ target }) {
+            this.displayCount = +target.value;
+        },
+        defaultDisplayCount() {
+            if (this.displayCount !== 0) { return this.displayCount; }
+            return this.maxCount < 5000 ? this.maxCount : 5000;
         },
         startLoadingNewDataset() {
             this.handleChangeDataset(this.selectedDataset, this.name, this.imgCount);
