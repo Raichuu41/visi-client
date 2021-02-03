@@ -115,6 +115,12 @@
                     <span class="btn dummy">Update embedding</span>
                     based on marked groups
                 </div>
+                <br>
+                <div class="">
+                    Info: Hold
+                    <span class="btn dummy">Spacebar</span>
+                    to navigate easier
+                </div>
             </div>
             <div class="area help-box" v-if="showHelp && neighbourMode">
                 <div class="title2">Help: Extend groups automatically</div>
