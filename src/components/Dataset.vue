@@ -203,6 +203,7 @@ export default {
                 this.name = name;
                 this.maxCount = size;
                 this.imgCount = size < 500 ? size : 500;
+                this.displayCount = 0;
             }
         },
         changeImgCount({ target }) {

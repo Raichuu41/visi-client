@@ -420,6 +420,7 @@
                             :changeNeighboursThreshold="changeNeighboursThreshold"
                             :getStore="getStore"
                             :neighboursThreshold="neighboursThreshold"
+                            :addAllAvailable="addAllAvailable"
                             :stop="stopNeighbourMode"
                         />
                     </div>
@@ -560,6 +561,7 @@ export default {
         allListeners: [],
         snapshotName: '',
         connectedToSocket: false,
+        addAllAvailable: false,
         showSettings: false,
         updateNodes: false,
         loadingImgs: false,
@@ -781,6 +783,7 @@ export default {
             // console.log(target.value);
             this.neighboursThreshold = +target.value;
             this.store.triggerDraw();
+            this.addAllAvailable = false;
         },
 
         changeClusterRadius(v) {

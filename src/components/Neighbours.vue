@@ -14,17 +14,19 @@
             <div class="btn dummy">{{ `${neighboursThreshold}#` }}</div>
         </div>
         <div class="row hint"># proposals in next iteration</div>
+        <repeat v-if="!loading"></repeat>
+        <div class="loader" v-if="loading"></div>
         <div class="row">
-            <div :class="{ active: loading }" @click="getGroupNeighbours" class="btn">
+        <div class="row">
+            <button :disabled="loading" @click="getGroupNeighbours" class="btn">
                 Update proposals
-                <repeat v-if="!loading"></repeat>
-                <div class="loader" v-if="loading"></div>
-            </div>
+            </button>
+        </div>
         </div>
         <div class="row">
-            <div class="btn" @click="addAllNeighbours">
+            <button class="btn" @click="addAllNeighbours" :disabled="!addAllAvailable">
                 Add all proposals
-            </div>
+            </button>
         </div>
     </div>
 </template>
@@ -43,7 +45,7 @@ export default {
         'changeNeighboursThreshold',
         'activeGroupId',
         'stop',
-        'current_neighbours',
+        'addAllAvailable',
     ],
     components: {
         RangeSlider,
@@ -52,6 +54,7 @@ export default {
     },
     data: () => ({
         loading: false,
+        current_neighbours: undefined,
     }),
     mounted() {
         socket.on('BE-getGroupNeighbours', this.getGroupNeighboursOn);
@@ -73,9 +76,10 @@ export default {
             } else {
                 const store = this.getStore();
                 store.updateGroupProposals(neighbours);
-                store.addNodesToActiveGroup(group);
+                // store.addNodesToActiveGroup(group);
                 this.current_neighbours = neighbours;
                 this.loading = false;
+                this.addAllAvailable = true;
             }
         },
 
@@ -89,6 +93,7 @@ export default {
                 });
             } else {
                 this.loading = true;
+                this.addAllAvailable = false;
                 const store = this.getStore();
                 store.resetScaleTranslate();
                 const body = {
@@ -112,10 +117,7 @@ export default {
         },
 
         async addAllNeighbours() {
-            this.loading = true;
             const store = this.getStore();
-            store.resetScaleTranslate();
-            this.loading = false;
             const neighbourIds = Object.keys(this.current_neighbours);
             store.addNodesToActiveGroup(neighbourIds);
             await this.getGroupNeighbours();
