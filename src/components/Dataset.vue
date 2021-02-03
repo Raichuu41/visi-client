@@ -217,10 +217,16 @@ export default {
         },
         defaultDisplayCount() {
             if (this.displayCount !== 0) { return this.displayCount; }
-            return this.maxCount < 5000 ? this.maxCount : 5000;
+            if (this.maxCount < 5000) {
+                this.displayCount = this.maxCount;
+                return this.displayCount;
+            }
+            this.displayCount = 5000;
+            return this.displayCount;
         },
         startLoadingNewDataset() {
-            this.handleChangeDataset(this.selectedDataset, this.name, this.imgCount);
+            this.handleChangeDataset(this.selectedDataset, this.name, this.imgCount, null, null,
+                false, this.displayCount);
         },
         handleStartNew() {
             console.log('handleStartNew');
@@ -269,7 +275,7 @@ export default {
             console.log('received snapshot data successfully');
             this.handleChangeDataset(
                 snapshotData.dataset, this.name, snapshotData.count, snapshotData.nodes,
-                snapshotData.groups, snapshotData.modelChanged,
+                snapshotData.groups, snapshotData.modelChanged, snapshotData.displayCount,
             );
         },
     },

@@ -1301,6 +1301,7 @@ export default {
             const { dataset } = this;
             const count = this.selectedImgCount;
             const userid = this.userId;
+            const { displayCount } = this;
             const { modelChanged } = this;
             // dont save if there not all nodes loaded
             if (!Object.keys(nodes).length || this.loadingImgs) {
@@ -1320,6 +1321,7 @@ export default {
                     userid,
                     snapshotName,
                     modelChanged,
+                    displayCount,
                 });
             }
         },
