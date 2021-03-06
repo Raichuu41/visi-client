@@ -17,6 +17,7 @@ export default class ExplorerState {
         this.valid = true; // use for checking if draw() is running
         this.nodes = {}; // hash for all nodes
         this.displayedNodes = {}; // dictionary for all displayed nodes
+        this.calculateSlice = true;
         this.displayCount = ui.displayCount; // how many images to display
         this.colorHash = {}; // find nodes by color
         this.panning = false; // Keep track of when we are dragging
@@ -666,6 +667,12 @@ export default class ExplorerState {
         this.ui.savedGroups.forEach(group => (group.count = counter[group.groupId]));
     }
 
+    updateGroupCountV2() {
+        this.ui.savedGroups.forEach(group => (
+            group.count = group.allNodes.length
+        ));
+    }
+
     draw() {
         // console.log('start draw')
         const startTime = window.performance.now();
@@ -733,7 +740,10 @@ export default class ExplorerState {
                 : Object.values(this.nodes);
         // todo:: filter out X nodes if length of nodes > picked slider range (from dataset selection)
         if (!neighbourMode) {
-            this.displayedNodes = nodes.slice(0, this.displayCount);
+            if (this.calculateSlice) {
+                this.displayedNodes = nodes.slice(0, this.displayCount);
+                this.calculateSlice = false;
+            }
             nodes = this.displayedNodes;
         }
         nodes.forEach((node) => {
@@ -1328,12 +1338,34 @@ export default class ExplorerState {
 
         return null;
     }
+
     /*
     addAllProposals(e) {
         console.log('addAllProposals');
 
     }
     */
+    handleNodeGroup(node, groupId) {
+        const nodeId = node.index;
+        const previousGroupId = node._group;
+        console.log(this.ui.savedGroups);
+        if (this.ui.savedGroups[previousGroupId] === undefined) {
+            return;
+        }
+        // node was already part of another group, remove it from there
+        if (previousGroupId !== groupId) {
+            this.ui.savedGroups[previousGroupId].allNodes = this.ui.savedGroups[previousGroupId]
+                .allNodes.filter(item => item !== nodeId);
+        }
+        // remove node ID from the group
+        if (previousGroupId === groupId) {
+            this.ui.savedGroups[groupId].allNodes = this.ui.savedGroups[groupId]
+                .allNodes.filter(item => item !== nodeId);
+        } else {
+            // add node ID to the group
+            this.ui.savedGroups[groupId].allNodes.push(nodeId);
+        }
+    }
 
     handleMouseUp(e) {
         console.log('mouseup');
@@ -1363,13 +1395,15 @@ export default class ExplorerState {
 
                 // flag/unflag node as and add/remove from group
                 if (nodeUnderMouse.group || nodeUnderMouse.groupId) {
+                    this.handleNodeGroup(nodeUnderMouse, this.ui.activeGroupId);
                     nodeUnderMouse.group = false;
                     nodeUnderMouse.groupId = 0;
                 } else {
+                    this.handleNodeGroup(nodeUnderMouse, this.ui.activeGroupId);
                     nodeUnderMouse.group = true;
                     nodeUnderMouse.groupId = this.ui.activeGroupId;
                 }
-                this.updateGroupCount();
+                this.updateGroupCountV2();
                 if (this.ui.neighbourMode) {
                     // if user adds a proposal
                     if (this.proposals[nodeUnderMouse.index]) {
