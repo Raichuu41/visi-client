@@ -731,7 +731,6 @@ export default class ExplorerState {
             : clusterMode && repsMode
                 ? this.sortNodesReps(repsMode)
                 : Object.values(this.nodes);
-        // todo:: filter out X nodes if length of nodes > picked slider range (from dataset selection)
         if (!neighbourMode) {
             this.displayedNodes = nodes.slice(0, this.displayCount);
             nodes = this.displayedNodes;
