@@ -6,7 +6,7 @@ import VueEvaInput from 'vue-eva-input';
 import App from './App';
 import router from './router';
 import './index.css';
-import socket from '@/util/socketBackend';
+import socket from './util/socketBackend';
 // import vuetify from '@/plugins/vuetify';
 
 Vue.use(VueEvaInput);

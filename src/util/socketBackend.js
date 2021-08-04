@@ -1,8 +1,8 @@
 import io from 'socket.io-client';
-import { logYellow } from '@/util/logging';
+import { logYellow } from './logging';
 
 let socketUrl;
-if (process.env.NODE_ENV) {
+if (process.env.NODE_ENV === 'production') {
     socketUrl = '129.206.106.202';
 } else {
     socketUrl = 'localhost';
