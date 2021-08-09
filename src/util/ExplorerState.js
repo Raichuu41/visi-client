@@ -11,7 +11,8 @@ export default class ExplorerState {
         this.ctx = canvas.getContext('2d');
         this.width = canvas.width;
         this.height = canvas.height;
-
+        this.previewMode = false;
+        this.previewTimer = null;
         this.hitCtx = hitCanvas.getContext('2d');
 
         this.valid = true; // use for checking if draw() is running
@@ -277,9 +278,26 @@ export default class ExplorerState {
     }
 
     triggerDraw() {
-        // console.log('trigger draw. valid?: ', this.valid)
-        if (this.valid) window.requestAnimationFrame(() => this.draw());
+        clearTimeout(this.previewTimer);
+        if (this.previewMode) {
+            this.previewTimer = setTimeout(() => {
+                if (this.valid) window.requestAnimationFrame(() => this.draw());
+            }, 2000);
+        } else if (this.valid) window.requestAnimationFrame(() => this.draw());
         this.valid = false;
+        this.previewMode = false;
+    }
+
+    triggerDrawPreview() {
+        if (this.valid) window.requestAnimationFrame(() => this.draw_preview());
+        this.valid = false;
+        this.previewMode = true;
+        this.triggerDraw();
+        /*
+        setTimeout(() => {
+            if (this.previewMode) this.triggerDraw();
+        }, 3000);
+         */
     }
 
     doubleNodes() {
@@ -294,7 +312,7 @@ export default class ExplorerState {
                 ...node,
             };
             newNode.index = index;
-            console.log({ newNode, node, index });
+            console.log({newNode, node, index});
             this.addNode(newNode);
         });
         console.log(this.nodes);
@@ -334,7 +352,7 @@ export default class ExplorerState {
                 representImgSize,
             } = this;
 
-            const { clusterMode } = this.ui;
+            const {clusterMode} = this.ui;
 
             // count nodes inside explorer todo that can be perform bedder
             Object.values(this.nodes).forEach((node) => {
@@ -448,7 +466,7 @@ export default class ExplorerState {
 
         // console.log(cluster);
         cluster.forEach((c) => {
-            const { index, cluster_id, point_count } = c.properties;
+            const {index, cluster_id, point_count} = c.properties;
             // console.log({ index, cluster_id, point_count } )
             if (index) {
                 // this is a not clustered point
@@ -476,7 +494,7 @@ export default class ExplorerState {
                         centroidId = p.properties.index;
                     }
                 });
-                if (log) console.log({ centroidId, min });
+                if (log) console.log({centroidId, min});
                 // console.log({ centroidId, id: c.properties.centroidId });
                 // set centroid as represent
                 this.nodes[centroidId].isClusterd = false;
@@ -578,8 +596,8 @@ export default class ExplorerState {
     getNodes() {
         const nodes = {};
         Object.values(this.nodes).forEach(({
-            index, x, y, name, labels, groupId,
-        }) => {
+                                               index, x, y, name, labels, groupId,
+                                           }) => {
             nodes[index] = {
                 index,
                 x,
@@ -795,7 +813,7 @@ export default class ExplorerState {
             const nodeIdUnderMouse = nodeUnderMouse && nodeUnderMouse.index === node.index;
 
             /**
-                DRAW not active Groups
+             DRAW not active Groups
              */
             if (node.groupId > 0 && !node.group) {
                 for (let imgRow = -3; imgRow <= imgH + 2; imgRow += 1) {
@@ -859,7 +877,7 @@ export default class ExplorerState {
             }
 
             /**
-                DRAW IMAGE
+             DRAW IMAGE
              */
             // loop through rows in img
             for (let imgRow = 0; imgRow < imgH; imgRow += 1) {
@@ -887,7 +905,7 @@ export default class ExplorerState {
             }
 
             /**
-                DRAW RANK COLOR BORDER
+             DRAW RANK COLOR BORDER
              */
             if (boarderRankedMode) {
                 const color = gradient[node.cliqueLength];
@@ -934,14 +952,14 @@ export default class ExplorerState {
             }
 
             /**
-                DRAW LABEL BORDER
+             DRAW LABEL BORDER
              */
-            // Todo get variables via this.ui
+                // Todo get variables via this.ui
             const labelBorder = this.selectedCategory
                 && this.selectedLabel
                 && this.selectedLabel === node.labels[this.selectedCategory];
             if (labelBorder) {
-                const { color } = this.ui.labels[this.selectedCategory].labels.find(
+                const {color} = this.ui.labels[this.selectedCategory].labels.find(
                     e => e.name === this.selectedLabel,
                 );
                 // draw boarder
@@ -987,7 +1005,7 @@ export default class ExplorerState {
             }
 
             /**
-                DRAW GROUP BORDER
+             DRAW GROUP BORDER
              */
             // TODO Perfomance is maybe bedder without another loop
 
@@ -1062,7 +1080,461 @@ export default class ExplorerState {
         });
 
         /**
-            DRAW SCISSORS
+         DRAW SCISSORS
+         */
+        if (this.drawScissors) {
+            const explorerX = this.scissorStartX < this.scissorEndX ? this.scissorStartX : this.scissorEndX;
+            const explorerY = this.scissorStartY < this.scissorEndY ? this.scissorStartY : this.scissorEndY;
+
+            const scissorW = Math.abs(this.scissorEndX - this.scissorStartX);
+            const scissorH = Math.abs(this.scissorEndY - this.scissorStartY);
+
+            // '#3882ff';
+            const color = this.scissiorColor;
+
+            // loop through each row of the reactangle
+            for (let scisRow = 0; scisRow < scissorH; scisRow += 1) {
+                const explorerRow = ((explorerY + scisRow) * explorerW + explorerX) * 4;
+
+                // loop through each col of the reactangle
+                for (let scisCol = 0; scisCol < scissorW; scisCol += 1) {
+                    const c = explorerRow + scisCol * 4;
+                    if (scisRow === 0 || scisRow === scissorH - 1) {
+                        // draw top line r
+                        explorerPixel[c] = color[0]; // R
+                        explorerPixel[c + 1] = color[1]; // G
+                        explorerPixel[c + 2] = color[2]; // B
+                        explorerPixel[c + 3] = 255;
+                    } else if (scisCol === 0 || scisCol === scissorW - 1) {
+                        // draw left boarder
+                        const l = explorerRow;
+                        explorerPixel[l] = color[0]; // R
+                        explorerPixel[l + 1] = color[1]; // G
+                        explorerPixel[l + 2] = color[2]; // B
+                        explorerPixel[l + 3] = 255;
+
+                        // draw left boarder
+                        const r = explorerRow + (scissorW - 1) * 4;
+                        explorerPixel[r] = color[0]; // R
+                        explorerPixel[r + 1] = color[1]; // G
+                        explorerPixel[r + 2] = color[2]; // B
+                        explorerPixel[r + 3] = 255;
+                    }
+                }
+            }
+        }
+
+        const pic = new ImageData(explorerPixel, explorerW, explorerH);
+        const hitmap = new ImageData(hitmapPixel, explorerW, explorerH);
+        const hitmapCtx = this.ui.toggle ? this.ctx : this.hitCtx;
+        this.ctx.putImageData(pic, 0, 0);
+        hitmapCtx.putImageData(hitmap, 0, 0);
+
+        const endTime = window.performance.now();
+        const time = endTime - startTime;
+        // console.log(`Draw: ${time}`);
+        if (this.ui.showLogs || this.performanceTest) this.perfLogs.draw.push(Math.round(time * 1000) / 1000);
+        if (time > this.maxDrawTime) {
+            this.maxDrawTime = time;
+            console.warn('new max draw time');
+            console.warn(this.maxDrawTime);
+        }
+        this.valid = true;
+    }
+
+    draw_preview() {
+        // console.log('start draw')
+        const startTime = window.performance.now();
+        if (this.wasm) {
+            this.ui.draw2();
+            const endTime = window.performance.now();
+            const time = endTime - startTime;
+            if (time > this.maxDrawTime) {
+                this.maxDrawTime = time;
+                console.warn('new max draw time');
+                console.warn(this.maxDrawTime);
+            }
+            console.log(`Draw2: ${time}`);
+            if (this.ui.showLogs || this.performanceTest) this.perfLogs.draw.push(Math.round(time * 1000) / 1000);
+            this.valid = true;
+            if (this.ui.showNavHeatmap) requestAnimationFrame(this.ui.drawNavHeatmapRect);
+            return 0;
+        }
+
+        // TODO Performance tests
+
+        // TODO kd tree
+        // TODO 1. kdtree-range test for generating node id's
+        // TODO 2. update kdtree test (after D&D)
+
+        // TODO kmeans perfomance test
+        // TODO 1. calc 50 k-means wirh kdtree results
+
+        const {
+            // zoomStage,
+            scale,
+            width: explorerW,
+            height: explorerH,
+            translateX: tx,
+            translateY: ty,
+            representImgSize,
+            nodeUnderMouse,
+        } = this;
+
+        const {
+            boarderRankedMode,
+            sizeRankedMode,
+            gradient,
+            clusterMode,
+            // oldClusterMode,
+            neighbourMode,
+            representMaxAlpha,
+            repsMode,
+            alphaBase,
+            alphaIncrease,
+            groupBorderAllActive,
+        } = this.ui;
+
+        const nonActiveGroupAplha = groupBorderAllActive ? 255 : this.nonActiveGroupAplha;
+        const zoomStage = Math.floor(this.zoomStage);
+
+        const explorerPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
+        const hitmapPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
+        // console.log({ explorerW, explorerH, tx, ty, scale });
+
+        let nodes = this.sorted
+            ? this.sortedNodes
+            : clusterMode && repsMode
+                ? this.sortNodesReps(repsMode)
+                : Object.values(this.nodes);
+        if (!neighbourMode) {
+            this.displayedNodes = nodes.slice(0, this.displayCount);
+            nodes = this.displayedNodes;
+        }
+        nodes.forEach((node) => {
+            let imgSize = sizeRankedMode
+                ? zoomStage + Math.floor(node.rank * this.sizeRange)
+                : zoomStage;
+            imgSize += this.imgSize; // add imgSize from user input
+            // reps size higher
+            const isRepresent = clusterMode && !node.isClusterd;
+            if (isRepresent) imgSize += representImgSize;
+            // || (oldClusterMode && node.cluster < this.cluster);
+
+            // asked here to not ask later again
+            const proposal = neighbourMode && this.proposals[node.index];
+
+            // make image larger because zoom is reset
+            if (neighbourMode) {
+                if (proposal) imgSize += this.neighbourImgSize;
+                else if (node.group) imgSize += 4;
+                else return; // don't draw image anyway
+            }
+            imgSize = 0;
+            const img = node.imageData[imgSize];
+            if (!img) return console.error(`no image for node: ${node.id}exists`);
+
+            const imgW = img.width;
+            const imgH = img.height;
+
+            const imgX = Math.floor(node.x * scale + tx - imgW / 2);
+            const imgY = Math.floor(node.y * scale + ty - imgH / 2);
+
+            // test if the image is outside the explorer
+            if (!(imgX < explorerW - imgW && imgY < explorerH - imgH && imgX > 0 && imgY > 0)) return;
+
+            // 1. Rule: some labels can be selected as "not show this"
+            // check if the image is allowed to draw in certain rules
+            let show = true;
+            // TODO diese funktion wird nicht in der BA beschrieben da nicht klar ob noch erwünscht
+            node.labels.forEach((nodeLabel, i) => {
+                if (nodeLabel && this.ui.labels[i]) {
+                    this.ui.labels[i].labels.forEach((e) => {
+                        if (e && !e.show && e.name === nodeLabel) show = false;
+                    });
+                }
+            });
+
+            if (!show) return;
+
+            const imgData = img.data;
+
+            // NOTE bedder performance in draw if grouColourId would be saved in node
+            const group = this.ui.savedGroups.find(e => e.groupId === node.groupId);
+            const groupColor = (group && this.groupColours[group.colorId]) || [50, 50, 50]; // black
+            const nearColor = [0, 127, 0]; // green
+
+            const nodeIdUnderMouse = nodeUnderMouse && nodeUnderMouse.index === node.index;
+
+            /**
+             DRAW not active Groups
+             */
+            if (node.groupId > 0 && !node.group) {
+                for (let imgRow = -3; imgRow <= imgH + 2; imgRow += 1) {
+                    const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
+                    if (
+                        imgRow === -3
+                        || imgRow === -2
+                        || imgRow === -1
+                        || imgRow === imgH + 1
+                        || imgRow === imgH + 2
+                        || imgRow === imgH
+                    ) {
+                        // draw top line r
+                        for (let imgCol = -3; imgCol < imgW + 3; imgCol += 1) {
+                            const c = explorerRow + imgCol * 4;
+                            explorerPixel[c] = groupColor[0]; // R
+                            explorerPixel[c + 1] = groupColor[1]; // G
+                            explorerPixel[c + 2] = groupColor[2]; // B
+                            explorerPixel[c + 3] = nonActiveGroupAplha;
+                        }
+                    } else {
+                        // draw left boarder
+                        const l = explorerRow - 12;
+                        explorerPixel[l] = groupColor[0]; // R
+                        explorerPixel[l + 1] = groupColor[1]; // G
+                        explorerPixel[l + 2] = groupColor[2]; // B
+                        explorerPixel[l + 3] = nonActiveGroupAplha;
+
+                        const l1 = explorerRow - 8;
+                        explorerPixel[l1] = groupColor[0]; // R
+                        explorerPixel[l1 + 1] = groupColor[1]; // G
+                        explorerPixel[l1 + 2] = groupColor[2]; // B
+                        explorerPixel[l1 + 3] = nonActiveGroupAplha;
+
+                        const l2 = explorerRow - 4;
+                        explorerPixel[l2] = groupColor[0]; // R
+                        explorerPixel[l2 + 1] = groupColor[1]; // G
+                        explorerPixel[l2 + 2] = groupColor[2]; // B
+                        explorerPixel[l2 + 3] = nonActiveGroupAplha;
+
+                        // draw right boarder
+                        const r = explorerRow + (imgW + 2) * 4;
+                        explorerPixel[r] = groupColor[0]; // R
+                        explorerPixel[r + 1] = groupColor[1]; // G
+                        explorerPixel[r + 2] = groupColor[2]; // B
+                        explorerPixel[r + 3] = nonActiveGroupAplha;
+
+                        const r1 = explorerRow + (imgW + 1) * 4;
+                        explorerPixel[r1] = groupColor[0]; // R
+                        explorerPixel[r1 + 1] = groupColor[1]; // G
+                        explorerPixel[r1 + 2] = groupColor[2]; // B
+                        explorerPixel[r1 + 3] = nonActiveGroupAplha;
+
+                        const r2 = explorerRow + imgW * 4;
+                        explorerPixel[r2] = groupColor[0]; // R
+                        explorerPixel[r2 + 1] = groupColor[1]; // G
+                        explorerPixel[r2 + 2] = groupColor[2]; // B
+                        explorerPixel[r2 + 3] = nonActiveGroupAplha;
+                    }
+                }
+            }
+
+            /**
+             DRAW IMAGE
+             */
+            // loop through rows in img
+            for (let imgRow = 0; imgRow < imgH; imgRow += 1) {
+                const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
+                // loop through column in img
+                for (let imgCol = 0; imgCol < imgW; imgCol += 1) {
+                    const c = explorerRow + imgCol * 4;
+                    const p = (imgRow * imgW + imgCol) * 4;
+                    explorerPixel[c] = imgData[p]; // R
+                    explorerPixel[c + 1] = imgData[p + 1]; // G
+                    explorerPixel[c + 2] = imgData[p + 2]; // B
+                    // special mode for represents // img over other img // white background
+                    explorerPixel[c + 3] = (representMaxAlpha && isRepresent) || nodeIdUnderMouse
+                        ? 255
+                        : explorerPixel[c + 3]
+                            ? explorerPixel[c + 3] + 10 * node.cliqueLength
+                            : alphaBase + zoomStage * alphaIncrease;
+
+                    // draw hitmap
+                    hitmapPixel[c] = node.colorKey[0]; // R
+                    hitmapPixel[c + 1] = node.colorKey[1]; // G
+                    hitmapPixel[c + 2] = node.colorKey[2]; // B
+                    hitmapPixel[c + 3] = 255; //
+                }
+            }
+
+            /**
+             DRAW RANK COLOR BORDER
+             */
+            if (boarderRankedMode) {
+                const color = gradient[node.cliqueLength];
+                // draw boarder
+                for (let imgRow = -2; imgRow <= imgH + 1; imgRow += 1) {
+                    const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
+                    if (imgRow === -2 || imgRow === -1 || imgRow === imgH + 1 || imgRow === imgH) {
+                        // draw top line r
+                        for (let imgCol = -2; imgCol < imgW + 2; imgCol += 1) {
+                            const c = explorerRow + imgCol * 4;
+                            explorerPixel[c] = color[0]; // R
+                            explorerPixel[c + 1] = color[1]; // G
+                            explorerPixel[c + 2] = color[2]; // B
+                            explorerPixel[c + 3] = 200;
+                        }
+                    } else {
+                        // draw right boarder
+                        const r = explorerRow - 4;
+                        explorerPixel[r] = color[0]; // R
+                        explorerPixel[r + 1] = color[1]; // G
+                        explorerPixel[r + 2] = color[2]; // B
+                        explorerPixel[r + 3] = 200;
+
+                        const r2 = explorerRow - 8;
+                        explorerPixel[r2] = color[0]; // R
+                        explorerPixel[r2 + 1] = color[1]; // G
+                        explorerPixel[r2 + 2] = color[2]; // B
+                        explorerPixel[r2 + 3] = 200;
+
+                        // draw left boarder
+                        const l = explorerRow + (imgW + 1) * 4;
+                        explorerPixel[l] = color[0]; // R
+                        explorerPixel[l + 1] = color[1]; // G
+                        explorerPixel[l + 2] = color[2]; // B
+                        explorerPixel[l + 3] = 200;
+
+                        const l2 = explorerRow + imgW * 4;
+                        explorerPixel[l2] = color[0]; // R
+                        explorerPixel[l2 + 1] = color[1]; // G
+                        explorerPixel[l2 + 2] = color[2]; // B
+                        explorerPixel[l2 + 3] = 200;
+                    }
+                }
+            }
+
+            /**
+             DRAW LABEL BORDER
+             */
+                // Todo get variables via this.ui
+            const labelBorder = this.selectedCategory
+                && this.selectedLabel
+                && this.selectedLabel === node.labels[this.selectedCategory];
+            if (labelBorder) {
+                const {color} = this.ui.labels[this.selectedCategory].labels.find(
+                    e => e.name === this.selectedLabel,
+                );
+                // draw boarder
+                for (let imgRow = -2; imgRow <= imgH + 1; imgRow += 1) {
+                    const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
+                    if (imgRow === -2 || imgRow === -1 || imgRow === imgH + 1 || imgRow === imgH) {
+                        // draw top line r
+                        for (let imgCol = -2; imgCol < imgW + 2; imgCol += 1) {
+                            const c = explorerRow + imgCol * 4;
+                            explorerPixel[c] = color[0]; // R
+                            explorerPixel[c + 1] = color[1]; // G
+                            explorerPixel[c + 2] = color[2]; // B
+                            explorerPixel[c + 3] = 200;
+                        }
+                    } else {
+                        // draw left boarder
+                        const l = explorerRow - 8;
+                        explorerPixel[l] = color[0]; // R
+                        explorerPixel[l + 1] = color[1]; // G
+                        explorerPixel[l + 2] = color[2]; // B
+                        explorerPixel[l + 3] = 200;
+
+                        const l2 = explorerRow - 4;
+                        explorerPixel[l2] = color[0]; // R
+                        explorerPixel[l2 + 1] = color[1]; // G
+                        explorerPixel[l2 + 2] = color[2]; // B
+                        explorerPixel[l2 + 3] = 200;
+
+                        // draw left boarder
+                        const r = explorerRow + (imgW + 1) * 4;
+                        explorerPixel[r] = color[0]; // R
+                        explorerPixel[r + 1] = color[1]; // G
+                        explorerPixel[r + 2] = color[2]; // B
+                        explorerPixel[r + 3] = 200;
+
+                        const r2 = explorerRow + imgW * 4;
+                        explorerPixel[r2] = color[0]; // R
+                        explorerPixel[r2 + 1] = color[1]; // G
+                        explorerPixel[r2 + 2] = color[2]; // B
+                        explorerPixel[r2 + 3] = 200;
+                    }
+                }
+            }
+
+            /**
+             DRAW GROUP BORDER
+             */
+            // TODO Perfomance is maybe bedder without another loop
+
+            // draw only if group, label2 or proposal
+            if (
+                !node.group
+                && !node.isNearly
+                // && (!proposal)
+            ) return;
+
+            const lineColor = node.isNearly ? nearColor : node.group ? groupColor : null;
+            if (lineColor) {
+                for (let imgRow = -3; imgRow <= imgH + 2; imgRow += 1) {
+                    const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
+                    if (
+                        imgRow === -3
+                        || imgRow === -2
+                        || imgRow === -1
+                        || imgRow === imgH + 1
+                        || imgRow === imgH + 2
+                        || imgRow === imgH
+                    ) {
+                        // draw top line r
+                        for (let imgCol = -3; imgCol < imgW + 3; imgCol += 1) {
+                            const c = explorerRow + imgCol * 4;
+                            explorerPixel[c] = lineColor[0]; // R
+                            explorerPixel[c + 1] = lineColor[1]; // G
+                            explorerPixel[c + 2] = lineColor[2]; // B
+                            explorerPixel[c + 3] = 200;
+                        }
+                    } else {
+                        // draw left boarder
+                        const l = explorerRow - 12;
+                        explorerPixel[l] = lineColor[0]; // R
+                        explorerPixel[l + 1] = lineColor[1]; // G
+                        explorerPixel[l + 2] = lineColor[2]; // B
+                        explorerPixel[l + 3] = 200;
+
+                        const l1 = explorerRow - 8;
+                        explorerPixel[l1] = groupColor[0]; // R
+                        explorerPixel[l1 + 1] = groupColor[1]; // G
+                        explorerPixel[l1 + 2] = groupColor[2]; // B
+                        explorerPixel[l1 + 3] = 200;
+
+                        const l2 = explorerRow - 4;
+                        explorerPixel[l2] = lineColor[0]; // R
+                        explorerPixel[l2 + 1] = lineColor[1]; // G
+                        explorerPixel[l2 + 2] = lineColor[2]; // B
+                        explorerPixel[l2 + 3] = 200;
+
+                        // draw left boarder
+                        const r = explorerRow + (imgW + 2) * 4;
+                        explorerPixel[r] = lineColor[0]; // R
+                        explorerPixel[r + 1] = lineColor[1]; // G
+                        explorerPixel[r + 2] = lineColor[2]; // B
+                        explorerPixel[r + 3] = 200;
+
+                        const r1 = explorerRow + (imgW + 1) * 4;
+                        explorerPixel[r1] = groupColor[0]; // R
+                        explorerPixel[r1 + 1] = groupColor[1]; // G
+                        explorerPixel[r1 + 2] = groupColor[2]; // B
+                        explorerPixel[r1 + 3] = 200;
+
+                        const r2 = explorerRow + imgW * 4;
+                        explorerPixel[r2] = lineColor[0]; // R
+                        explorerPixel[r2 + 1] = lineColor[1]; // G
+                        explorerPixel[r2 + 2] = lineColor[2]; // B
+                        explorerPixel[r2 + 3] = 200;
+                    }
+                }
+            }
+        });
+
+        /**
+         DRAW SCISSORS
          */
         if (this.drawScissors) {
             const explorerX = this.scissorStartX < this.scissorEndX ? this.scissorStartX : this.scissorEndX;
@@ -1169,7 +1641,7 @@ export default class ExplorerState {
         }
 
         this.updateClustering();
-        this.triggerDraw();
+        this.triggerDrawPreview();
         if (this.ui.showNavHeatmap) requestAnimationFrame(this.ui.drawNavHeatmapRect);
 
         return false;
@@ -1209,7 +1681,7 @@ export default class ExplorerState {
         // console.log(e.offsetY);
 
         // saving for checking if node was clicked in handleMouseUp
-        const { nodeUnderMouse } = this;
+        const {nodeUnderMouse} = this;
         this.nodeOnMouseDown = nodeUnderMouse;
 
         // save start position
@@ -1250,7 +1722,7 @@ export default class ExplorerState {
             this.scissorEndX = mouseX;
             this.scissorEndY = mouseY;
             if (this.wasm) this.wasm.stateSetScissiorEndXY(mouseX, mouseY);
-            return this.triggerDraw();
+            return this.triggerDrawPreview();
         }
 
         // DRAG AND DROP
@@ -1297,7 +1769,7 @@ export default class ExplorerState {
                     this.draggedNode.y += imgY;
                 }
             }
-            return this.triggerDraw();
+            return this.triggerDrawPreview();
         }
         // different interaction based ob if a node is active or node
         const nodeUnderMouse = this.findNodeByMousePosition(mouseX, mouseY);
@@ -1306,8 +1778,8 @@ export default class ExplorerState {
             (oldnodeUnderMouse && !nodeUnderMouse)
             || (!oldnodeUnderMouse && nodeUnderMouse)
             || (nodeUnderMouse
-                && oldnodeUnderMouse
-                && oldnodeUnderMouse.index !== nodeUnderMouse.index)
+            && oldnodeUnderMouse
+            && oldnodeUnderMouse.index !== nodeUnderMouse.index)
         ) {
             console.error('CHANGE NODE');
             this.nodeUnderMouse = nodeUnderMouse;
@@ -1327,6 +1799,7 @@ export default class ExplorerState {
 
         return null;
     }
+
     /*
     addAllProposals(e) {
         console.log('addAllProposals');
@@ -1340,7 +1813,7 @@ export default class ExplorerState {
             this.panning = false;
             return this.triggerDraw();
         }
-        const { nodeUnderMouse } = this;
+        const {nodeUnderMouse} = this;
 
         /** check if image under mouse is still the same as on last set */
         if (nodeUnderMouse && nodeUnderMouse === this.nodeOnMouseDown) {
@@ -1376,7 +1849,7 @@ export default class ExplorerState {
                         console.log('add proposal to group');
                         this.removedProposals[nodeUnderMouse.index] = this.proposals[
                             nodeUnderMouse.index
-                        ];
+                            ];
                         this.proposals[nodeUnderMouse.index] = undefined;
                     } else {
                         // node is removed from group
