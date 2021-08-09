@@ -278,12 +278,15 @@ export default class ExplorerState {
     }
 
     triggerDraw() {
+        /*
         clearTimeout(this.previewTimer);
         if (this.previewMode) {
             this.previewTimer = setTimeout(() => {
                 if (this.valid) window.requestAnimationFrame(() => this.draw());
-            }, 2000);
+            }, 1000);
         } else if (this.valid) window.requestAnimationFrame(() => this.draw());
+         */
+        if (this.valid) window.requestAnimationFrame(() => this.draw());
         this.valid = false;
         this.previewMode = false;
     }
@@ -686,6 +689,7 @@ export default class ExplorerState {
 
     draw() {
         // console.log('start draw')
+        if (this.previewMode) return;
         const startTime = window.performance.now();
         if (this.wasm) {
             this.ui.draw2();
@@ -711,8 +715,7 @@ export default class ExplorerState {
 
         // TODO kmeans perfomance test
         // TODO 1. calc 50 k-means wirh kdtree results
-
-        const {
+        let {
             // zoomStage,
             scale,
             width: explorerW,
@@ -722,7 +725,6 @@ export default class ExplorerState {
             representImgSize,
             nodeUnderMouse,
         } = this;
-
         const {
             boarderRankedMode,
             sizeRankedMode,
@@ -739,7 +741,6 @@ export default class ExplorerState {
 
         const nonActiveGroupAplha = groupBorderAllActive ? 255 : this.nonActiveGroupAplha;
         const zoomStage = Math.floor(this.zoomStage);
-
         const explorerPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
         const hitmapPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
         // console.log({ explorerW, explorerH, tx, ty, scale });
@@ -775,7 +776,7 @@ export default class ExplorerState {
 
             // check imgsize
             if (imgSize < 0) imgSize = 0;
-            else if (imgSize > 9) imgSize = 9;
+            else if (imgSize > 5) imgSize = 5;
 
             const img = node.imageData[imgSize];
             if (!img) return console.error(`no image for node: ${node.id}exists`);
@@ -1132,7 +1133,7 @@ export default class ExplorerState {
 
         const endTime = window.performance.now();
         const time = endTime - startTime;
-        // console.log(`Draw: ${time}`);
+        console.log(`Draw: ${time}`);
         if (this.ui.showLogs || this.performanceTest) this.perfLogs.draw.push(Math.round(time * 1000) / 1000);
         if (time > this.maxDrawTime) {
             this.maxDrawTime = time;
