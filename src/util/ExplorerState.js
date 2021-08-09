@@ -684,6 +684,7 @@ export default class ExplorerState {
 
     updateGroupCount() {
         console.log('updateGroupCount');
+        /*
         // build counter
         const counter = {};
         this.ui.savedGroups.forEach(group => (counter[group.groupId] = 0));
@@ -693,6 +694,8 @@ export default class ExplorerState {
         });
         // update groups in ui
         this.ui.savedGroups.forEach(group => (group.count = counter[group.groupId]));
+
+         */
     }
 
     draw() {
