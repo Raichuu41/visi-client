@@ -257,6 +257,14 @@ export default class ExplorerState {
         this.triggerDraw();
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    maximumImageSize(totalImages) {
+        if (totalImages <= 10000) return 9;
+        if (totalImages <= 20000) return 7;
+        if (totalImages <= 30000) return 6;
+        return 5;
+    }
+
     save() {
         console.log('save');
         const dataUrl = this.explorer
@@ -295,7 +303,7 @@ export default class ExplorerState {
         if (this.valid) window.requestAnimationFrame(() => this.draw_preview());
         this.valid = false;
         this.previewMode = true;
-        this.triggerDraw();
+        // this.triggerDraw();
         /*
         setTimeout(() => {
             if (this.previewMode) this.triggerDraw();
@@ -754,6 +762,7 @@ export default class ExplorerState {
             this.displayedNodes = nodes.slice(0, this.displayCount);
             nodes = this.displayedNodes;
         }
+        const maxImageSize = this.maximumImageSize(this.ui.nodesTotal);
         nodes.forEach((node) => {
             let imgSize = sizeRankedMode
                 ? zoomStage + Math.floor(node.rank * this.sizeRange)
@@ -776,7 +785,7 @@ export default class ExplorerState {
 
             // check imgsize
             if (imgSize < 0) imgSize = 0;
-            else if (imgSize > 5) imgSize = 5;
+            else if (imgSize > maxImageSize) imgSize = maxImageSize;
 
             const img = node.imageData[imgSize];
             if (!img) return console.error(`no image for node: ${node.id}exists`);
