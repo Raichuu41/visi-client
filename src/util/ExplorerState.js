@@ -285,23 +285,28 @@ export default class ExplorerState {
         }
     }
 
-    triggerDraw() {
-        clearTimeout(this.previewTimer);
-        if (this.previewMode) {
-            this.previewTimer = setTimeout(() => {
-                window.requestAnimationFrame(() => {
-                    this.draw();
-                });
-            }, 1000);
+    triggerDraw(fromPreview = false) {
+        if (fromPreview) {
+            clearTimeout(this.previewTimer);
+            if (this.previewMode) {
+                this.previewTimer = setTimeout(() => {
+                    window.requestAnimationFrame(() => {
+                        this.draw();
+                    });
+                }, 1000);
+            }
+        } else {
+            window.requestAnimationFrame(() => {
+                this.draw();
+            });
         }
-        // if (this.valid) window.requestAnimationFrame(() => this.draw());
         // this.previewMode = false;
     }
 
     triggerDrawPreview() {
         if (this.valid) window.requestAnimationFrame(() => this.draw_preview());
         this.previewMode = true;
-        this.triggerDraw();
+        this.triggerDraw(true);
         /*
         setTimeout(() => {
             if (this.previewMode) this.triggerDraw();
@@ -1795,7 +1800,7 @@ export default class ExplorerState {
             console.error('CHANGE NODE');
             this.nodeUnderMouse = nodeUnderMouse;
             this.ui.activeNode = nodeUnderMouse;
-            this.triggerDraw();
+            this.triggerDraw(true);
         }
 
         // trigger load high resolution img
@@ -1822,7 +1827,7 @@ export default class ExplorerState {
         console.log('mouseup');
         if (this.panning) {
             this.panning = false;
-            return this.triggerDraw();
+            return this.triggerDraw(true);
         }
         const {nodeUnderMouse} = this;
 
@@ -1923,7 +1928,7 @@ export default class ExplorerState {
             this.ui.scissors = false;
             this.drawScissors = false;
         }
-        return this.triggerDraw();
+        return this.triggerDraw(true);
     }
 
     /**
