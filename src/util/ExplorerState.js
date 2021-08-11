@@ -47,7 +47,7 @@ export default class ExplorerState {
         this._clusterTile = 5;
         this.supercluster = supercluster(); // TODO check best init for this var
 
-        this.initScale = 20;
+        this.initScale = null;
         this._scale = this.initScale;
         this._scaleFaktor = 0;
         this._zoomStage = 0; // default zoom stage, 0 is the smallest pic
@@ -420,7 +420,8 @@ export default class ExplorerState {
         // reset cluster flags for zoom stages
         this.resetClusteringOnZoomStages();
         // parse nodes into suitable format for supercluster
-        const geoPoints = Object.values(this.nodes).map(n => ({
+        const nodes = this.getDisplayedNodes();
+        const geoPoints = Object.values(nodes).map(n => ({
             x: n.x,
             y: n.y,
             properties: {
@@ -470,6 +471,7 @@ export default class ExplorerState {
 
         // todo here kann man das kleiner machen um bilder nicht übern rand zu zeichnen
         // const rect = [-tx / scale, -ty / scale, (explorerW - ty) / scale, (explorerH - ty) / scale];
+        // const rect = [-scale * 1.25, -scale * 1.25, scale * 1.25, scale * 1.25];
         const rect = [-25, -25, 25, 25];
 
         // get clustering for current section (viewbox)
@@ -701,6 +703,43 @@ export default class ExplorerState {
          */
     }
 
+    calculateScale() {
+        let nodes = Object.values(this.nodes);
+        const {
+            width: explorerW,
+            height: explorerH,
+            translateX: tx,
+            translateY: ty,
+        } = this;
+        if (!this.displayedNodes.length) {
+            this.displayedNodes = nodes.slice(0, this.displayCount);
+        }
+        nodes = this.displayedNodes;
+        let fraction = 0;
+        let scale = 100;
+        while (fraction < 0.6) {
+            scale -= 5;
+            let counter = 0;
+            // eslint-disable-next-line no-loop-func
+            nodes.forEach((node) => {
+                const x = node.x * scale + tx;
+                const y = node.y * scale + ty;
+                if (x < explorerW && y < explorerH && x > 0 && y > 0) {
+                    counter += 1;
+                }
+            });
+            fraction = counter / nodes.length;
+        }
+        return scale;
+    }
+
+    getDisplayedNodes() {
+        if (!this.displayedNodes.length) {
+            this.displayedNodes = Object.values(this.nodes).slice(0, this.displayCount);
+        }
+        return this.displayedNodes;
+    }
+
     draw() {
         console.log('start draw');
         const startTime = window.performance.now();
@@ -764,10 +803,14 @@ export default class ExplorerState {
                 ? this.sortNodesReps(repsMode)
                 : Object.values(this.nodes);
         if (!neighbourMode) {
-            this.displayedNodes = nodes.slice(0, this.displayCount);
-            nodes = this.displayedNodes;
+            nodes = this.getDisplayedNodes();
         }
         const maxImageSize = this.maximumImageSize(this.ui.nodesTotal);
+        if (!scale) { // if initial scale value
+            scale = this.calculateScale();
+            this.initScale = scale;
+            this._scale = scale;
+        }
         nodes.forEach((node) => {
             let imgSize = sizeRankedMode
                 ? zoomStage + Math.floor(node.rank * this.sizeRange)
@@ -1224,8 +1267,7 @@ export default class ExplorerState {
                 ? this.sortNodesReps(repsMode)
                 : Object.values(this.nodes);
         if (!neighbourMode) {
-            this.displayedNodes = nodes.slice(0, this.displayCount);
-            nodes = this.displayedNodes;
+            nodes = this.getDisplayedNodes();
         }
         nodes.forEach((node) => {
             let imgSize = sizeRankedMode
@@ -1875,9 +1917,7 @@ export default class ExplorerState {
                     }
                 }
             }
-
             if (this.ui.showNavHeatmap) requestAnimationFrame(this.ui.drawNavHeatmap);
-
             if (this.draggedNode) {
                 // merge all "nearby nodes" to group
                 if (this.draggedNode.group) {

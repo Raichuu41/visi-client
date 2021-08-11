@@ -814,7 +814,7 @@ export default {
 
             // todo es sollte eigentlich besser skaliert werden mit
             // data in form of [[x,y,v], [x,y,v], ...]
-            const data = Object.values(this.store.nodes).map((node) => {
+            const data = Object.values(this.store.displayedNodes).map((node) => {
                 const x = node.x * 5 * this.navMapScale + w / 2;
                 const y = node.y * 5 * this.navMapScale + h / 2;
                 return [x, y, 1];
