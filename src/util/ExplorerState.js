@@ -11,7 +11,7 @@ export default class ExplorerState {
         this.ctx = canvas.getContext('2d');
         this.width = canvas.width;
         this.height = canvas.height;
-        this.previewMode = false;
+        this.previewMode = true;
         this.previewTimer = null;
         this.hitCtx = hitCanvas.getContext('2d');
 
@@ -286,24 +286,22 @@ export default class ExplorerState {
     }
 
     triggerDraw() {
-        /*
         clearTimeout(this.previewTimer);
         if (this.previewMode) {
             this.previewTimer = setTimeout(() => {
-                if (this.valid) window.requestAnimationFrame(() => this.draw());
+                window.requestAnimationFrame(() => {
+                    this.draw();
+                });
             }, 1000);
-        } else if (this.valid) window.requestAnimationFrame(() => this.draw());
-         */
-        if (this.valid) window.requestAnimationFrame(() => this.draw());
-        this.valid = false;
-        this.previewMode = false;
+        }
+        // if (this.valid) window.requestAnimationFrame(() => this.draw());
+        // this.previewMode = false;
     }
 
     triggerDrawPreview() {
         if (this.valid) window.requestAnimationFrame(() => this.draw_preview());
-        this.valid = false;
         this.previewMode = true;
-        // this.triggerDraw();
+        this.triggerDraw();
         /*
         setTimeout(() => {
             if (this.previewMode) this.triggerDraw();
@@ -699,8 +697,7 @@ export default class ExplorerState {
     }
 
     draw() {
-        // console.log('start draw')
-        if (this.previewMode) return;
+        console.log('start draw');
         const startTime = window.performance.now();
         if (this.wasm) {
             this.ui.draw2();
@@ -1153,6 +1150,7 @@ export default class ExplorerState {
             console.warn(this.maxDrawTime);
         }
         this.valid = true;
+        this.previewMode = false;
     }
 
     draw_preview() {
@@ -1956,6 +1954,7 @@ export default class ExplorerState {
 
     updateNodesInRange() {
         console.time('nodesInRange');
+        /*
         const tree = this.supercluster.trees[this.supercluster.trees.length - 1];
         // todo scale an zoomstufe anpassen da ja unterschiedliche trees?
         const r = (0.01 * 20) / this.scale;
@@ -1963,10 +1962,12 @@ export default class ExplorerState {
         Object.values(this.nodes).forEach((node) => {
             node.isNearly = !node.group && nodes.includes(node.index);
         });
+         */
         console.timeEnd('nodesInRange');
     }
 
     addNodesInRangeToGroup() {
+        /*
         Object.values(this.nodes).forEach((node) => {
             if (node.isNearly) {
                 node.group = true;
@@ -1974,5 +1975,6 @@ export default class ExplorerState {
                 node.isNearly = false; // remove nearly status
             }
         });
+         */
     }
 }
