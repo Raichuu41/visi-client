@@ -1,5 +1,7 @@
+import resizeImageData from 'resize-image-data';
 import supercluster from './cluster';
 import groupColors from '../config/groupColors';
+import imageSizes from './imageSizes';
 
 export default class ExplorerState {
     constructor(canvas, hitCanvas, socket, ui) {
@@ -258,11 +260,18 @@ export default class ExplorerState {
     }
 
     // eslint-disable-next-line class-methods-use-this
-    maximumImageSize(totalImages) {
-        if (totalImages <= 10000) return 9;
-        if (totalImages <= 20000) return 7;
-        if (totalImages <= 30000) return 6;
-        return 5;
+    maximumImageSize(displayCount) {
+        if (displayCount <= 30000) return 9; // 9
+        if (displayCount <= 40000) return 8; // 7
+        if (displayCount <= 50000) return 7; // 6
+        return 6; // 5
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    getImagePreviewSize(displayCount, zoomStage) {
+        if (zoomStage < 2) return 0;
+        if (displayCount <= 30000) return 1;
+        return 0;
     }
 
     save() {
@@ -293,7 +302,7 @@ export default class ExplorerState {
                     window.requestAnimationFrame(() => {
                         this.draw();
                     });
-                }, 1000);
+                }, 150);
             }
         } else {
             window.requestAnimationFrame(() => {
@@ -326,7 +335,7 @@ export default class ExplorerState {
                 ...node,
             };
             newNode.index = index;
-            console.log({newNode, node, index});
+            console.log({ newNode, node, index });
             this.addNode(newNode);
         });
         console.log(this.nodes);
@@ -366,7 +375,7 @@ export default class ExplorerState {
                 representImgSize,
             } = this;
 
-            const {clusterMode} = this.ui;
+            const { clusterMode } = this.ui;
 
             // count nodes inside explorer todo that can be perform bedder
             Object.values(this.nodes).forEach((node) => {
@@ -482,7 +491,7 @@ export default class ExplorerState {
 
         // console.log(cluster);
         cluster.forEach((c) => {
-            const {index, cluster_id, point_count} = c.properties;
+            const { index, cluster_id, point_count } = c.properties;
             // console.log({ index, cluster_id, point_count } )
             if (index) {
                 // this is a not clustered point
@@ -510,7 +519,7 @@ export default class ExplorerState {
                         centroidId = p.properties.index;
                     }
                 });
-                if (log) console.log({centroidId, min});
+                if (log) console.log({ centroidId, min });
                 // console.log({ centroidId, id: c.properties.centroidId });
                 // set centroid as represent
                 this.nodes[centroidId].isClusterd = false;
@@ -612,8 +621,8 @@ export default class ExplorerState {
     getNodes() {
         const nodes = {};
         Object.values(this.nodes).forEach(({
-                                               index, x, y, name, labels, groupId,
-                                           }) => {
+            index, x, y, name, labels, groupId,
+        }) => {
             nodes[index] = {
                 index,
                 x,
@@ -740,6 +749,13 @@ export default class ExplorerState {
         return this.displayedNodes;
     }
 
+    closestInteger(a, b) {
+        const c1 = a - (a % b);
+        const c2 = (a + b) - (a % b);
+        if (a - c1 > c2 - a) return c2;
+        return c1;
+    }
+
     draw() {
         console.log('start draw');
         const startTime = window.performance.now();
@@ -790,7 +806,8 @@ export default class ExplorerState {
             alphaIncrease,
             groupBorderAllActive,
         } = this.ui;
-
+        explorerW = this.closestInteger(explorerW, 2) / 2;
+        explorerH = this.closestInteger(explorerH, 2) / 2;
         const nonActiveGroupAplha = groupBorderAllActive ? 255 : this.nonActiveGroupAplha;
         const zoomStage = Math.floor(this.zoomStage);
         const explorerPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
@@ -805,7 +822,7 @@ export default class ExplorerState {
         if (!neighbourMode) {
             nodes = this.getDisplayedNodes();
         }
-        const maxImageSize = this.maximumImageSize(this.ui.nodesTotal);
+        const maxImageSize = this.maximumImageSize(this.displayCount);
         if (!scale) { // if initial scale value
             scale = this.calculateScale();
             this.initScale = scale;
@@ -841,28 +858,12 @@ export default class ExplorerState {
             const imgW = img.width;
             const imgH = img.height;
 
-            const imgX = Math.floor(node.x * scale + tx - imgW / 2);
-            const imgY = Math.floor(node.y * scale + ty - imgH / 2);
+            const imgX = Math.floor(node.x * scale / 2 + tx / 2 - imgW / 2);
+            const imgY = Math.floor(node.y * scale / 2 + ty / 2 - imgH / 2);
 
             // test if the image is outside the explorer
             if (!(imgX < explorerW - imgW && imgY < explorerH - imgH && imgX > 0 && imgY > 0)) return;
-
-            // 1. Rule: some labels can be selected as "not show this"
-            // check if the image is allowed to draw in certain rules
-            let show = true;
-            // TODO diese funktion wird nicht in der BA beschrieben da nicht klar ob noch erwünscht
-            node.labels.forEach((nodeLabel, i) => {
-                if (nodeLabel && this.ui.labels[i]) {
-                    this.ui.labels[i].labels.forEach((e) => {
-                        if (e && !e.show && e.name === nodeLabel) show = false;
-                    });
-                }
-            });
-
-            if (!show) return;
-
             const imgData = img.data;
-
             // NOTE bedder performance in draw if grouColourId would be saved in node
             const group = this.ui.savedGroups.find(e => e.groupId === node.groupId);
             const groupColor = (group && this.groupColours[group.colorId]) || [50, 50, 50]; // black
@@ -1012,12 +1013,12 @@ export default class ExplorerState {
             /**
              DRAW LABEL BORDER
              */
-                // Todo get variables via this.ui
+            // Todo get variables via this.ui
             const labelBorder = this.selectedCategory
                 && this.selectedLabel
                 && this.selectedLabel === node.labels[this.selectedCategory];
             if (labelBorder) {
-                const {color} = this.ui.labels[this.selectedCategory].labels.find(
+                const { color } = this.ui.labels[this.selectedCategory].labels.find(
                     e => e.name === this.selectedLabel,
                 );
                 // draw boarder
@@ -1181,10 +1182,14 @@ export default class ExplorerState {
                 }
             }
         }
-
-        const pic = new ImageData(explorerPixel, explorerW, explorerH);
-        const hitmap = new ImageData(hitmapPixel, explorerW, explorerH);
+        let pic = new ImageData(explorerPixel, explorerW, explorerH);
+        let hitmap = new ImageData(hitmapPixel, explorerW, explorerH);
         const hitmapCtx = this.ui.toggle ? this.ctx : this.hitCtx;
+        // pic = resizeImageData(pic, explorerW / 2, explorerH / 2);
+        console.time('resizingData');
+        pic = resizeImageData(pic, explorerW * 2, explorerH * 2, 'nearest-neighbor');
+        hitmap = resizeImageData(hitmap, explorerW * 2, explorerH * 2, 'nearest-neighbor');
+        console.timeEnd('resizingData');
         this.ctx.putImageData(pic, 0, 0);
         hitmapCtx.putImageData(hitmap, 0, 0);
 
@@ -1229,7 +1234,7 @@ export default class ExplorerState {
         // TODO kmeans perfomance test
         // TODO 1. calc 50 k-means wirh kdtree results
 
-        const {
+        let {
             // zoomStage,
             scale,
             width: explorerW,
@@ -1256,7 +1261,11 @@ export default class ExplorerState {
 
         const nonActiveGroupAplha = groupBorderAllActive ? 255 : this.nonActiveGroupAplha;
         const zoomStage = Math.floor(this.zoomStage);
-
+        const previewSizeIndex = this.getImagePreviewSize(this.displayCount);
+        const resize = (imageSizes[Math.min(zoomStage, 9)] / imageSizes[previewSizeIndex]) * 2;
+        console.log(zoomStage, resize);
+        explorerW = this.closestInteger(explorerW, resize) / resize;
+        explorerH = this.closestInteger(explorerH, resize) / resize;
         const explorerPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
         const hitmapPixel = new Uint8ClampedArray(explorerW * explorerH * 4);
         // console.log({ explorerW, explorerH, tx, ty, scale });
@@ -1288,15 +1297,15 @@ export default class ExplorerState {
                 else if (node.group) imgSize += 4;
                 else return; // don't draw image anyway
             }
-            imgSize = 0;
+            imgSize = previewSizeIndex;
             const img = node.imageData[imgSize];
             if (!img) return console.error(`no image for node: ${node.id}exists`);
 
             const imgW = img.width;
             const imgH = img.height;
 
-            const imgX = Math.floor(node.x * scale + tx - imgW / 2);
-            const imgY = Math.floor(node.y * scale + ty - imgH / 2);
+            const imgX = Math.floor(node.x * scale / resize + tx / resize - imgW / resize);
+            const imgY = Math.floor(node.y * scale / resize + ty / resize - imgH / resize);
 
             // test if the image is outside the explorer
             if (!(imgX < explorerW - imgW && imgY < explorerH - imgH && imgX > 0 && imgY > 0)) return;
@@ -1466,12 +1475,12 @@ export default class ExplorerState {
             /**
              DRAW LABEL BORDER
              */
-                // Todo get variables via this.ui
+            // Todo get variables via this.ui
             const labelBorder = this.selectedCategory
                 && this.selectedLabel
                 && this.selectedLabel === node.labels[this.selectedCategory];
             if (labelBorder) {
-                const {color} = this.ui.labels[this.selectedCategory].labels.find(
+                const { color } = this.ui.labels[this.selectedCategory].labels.find(
                     e => e.name === this.selectedLabel,
                 );
                 // draw boarder
@@ -1636,8 +1645,10 @@ export default class ExplorerState {
             }
         }
 
-        const pic = new ImageData(explorerPixel, explorerW, explorerH);
-        const hitmap = new ImageData(hitmapPixel, explorerW, explorerH);
+        let pic = new ImageData(explorerPixel, explorerW, explorerH);
+        let hitmap = new ImageData(hitmapPixel, explorerW, explorerH);
+        pic = resizeImageData(pic, explorerW * resize, explorerH * resize, 'nearest-neighbor');
+        hitmap = resizeImageData(hitmap, explorerW * resize, explorerH * resize, 'nearest-neighbor');
         const hitmapCtx = this.ui.toggle ? this.ctx : this.hitCtx;
         this.ctx.putImageData(pic, 0, 0);
         hitmapCtx.putImageData(hitmap, 0, 0);
@@ -1739,7 +1750,7 @@ export default class ExplorerState {
         // console.log(e.offsetY);
 
         // saving for checking if node was clicked in handleMouseUp
-        const {nodeUnderMouse} = this;
+        const { nodeUnderMouse } = this;
         this.nodeOnMouseDown = nodeUnderMouse;
 
         // save start position
@@ -1871,7 +1882,7 @@ export default class ExplorerState {
             this.panning = false;
             return this.triggerDraw(true);
         }
-        const {nodeUnderMouse} = this;
+        const { nodeUnderMouse } = this;
 
         /** check if image under mouse is still the same as on last set */
         if (nodeUnderMouse && nodeUnderMouse === this.nodeOnMouseDown) {
@@ -1907,7 +1918,7 @@ export default class ExplorerState {
                         console.log('add proposal to group');
                         this.removedProposals[nodeUnderMouse.index] = this.proposals[
                             nodeUnderMouse.index
-                            ];
+                        ];
                         this.proposals[nodeUnderMouse.index] = undefined;
                     } else {
                         // node is removed from group
