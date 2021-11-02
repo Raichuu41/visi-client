@@ -269,8 +269,11 @@ export default class ExplorerState {
 
     // eslint-disable-next-line class-methods-use-this
     getImagePreviewSize(displayCount, zoomStage) {
-        if (zoomStage < 2) return 0;
-        if (displayCount <= 30000) return 1;
+        if (zoomStage <= 2) return 0;
+        if (zoomStage === 3 && displayCount <= 30000) return 1;
+        if (zoomStage === 3) return 0;
+        if (zoomStage === 4) return 1;
+        if (zoomStage >= 5) return 2;
         return 0;
     }
 
@@ -698,7 +701,7 @@ export default class ExplorerState {
 
     updateGroupCount() {
         console.log('updateGroupCount');
-        /*
+        const startTime = window.performance.now();
         // build counter
         const counter = {};
         this.ui.savedGroups.forEach(group => (counter[group.groupId] = 0));
@@ -708,8 +711,9 @@ export default class ExplorerState {
         });
         // update groups in ui
         this.ui.savedGroups.forEach(group => (group.count = counter[group.groupId]));
-
-         */
+        const endTime = window.performance.now();
+        const time = endTime - startTime;
+        console.log(`Group Count: ${time}`);
     }
 
     calculateScale() {
@@ -1261,7 +1265,7 @@ export default class ExplorerState {
 
         const nonActiveGroupAplha = groupBorderAllActive ? 255 : this.nonActiveGroupAplha;
         const zoomStage = Math.floor(this.zoomStage);
-        const previewSizeIndex = this.getImagePreviewSize(this.displayCount);
+        const previewSizeIndex = this.getImagePreviewSize(this.displayCount, zoomStage);
         const resize = (imageSizes[Math.min(zoomStage, 9)] / imageSizes[previewSizeIndex]) * 2;
         console.log(zoomStage, resize);
         explorerW = this.closestInteger(explorerW, resize) / resize;
@@ -1333,69 +1337,6 @@ export default class ExplorerState {
 
             const nodeIdUnderMouse = nodeUnderMouse && nodeUnderMouse.index === node.index;
 
-            /**
-             DRAW not active Groups
-             */
-            if (node.groupId > 0 && !node.group) {
-                for (let imgRow = -3; imgRow <= imgH + 2; imgRow += 1) {
-                    const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
-                    if (
-                        imgRow === -3
-                        || imgRow === -2
-                        || imgRow === -1
-                        || imgRow === imgH + 1
-                        || imgRow === imgH + 2
-                        || imgRow === imgH
-                    ) {
-                        // draw top line r
-                        for (let imgCol = -3; imgCol < imgW + 3; imgCol += 1) {
-                            const c = explorerRow + imgCol * 4;
-                            explorerPixel[c] = groupColor[0]; // R
-                            explorerPixel[c + 1] = groupColor[1]; // G
-                            explorerPixel[c + 2] = groupColor[2]; // B
-                            explorerPixel[c + 3] = nonActiveGroupAplha;
-                        }
-                    } else {
-                        // draw left boarder
-                        const l = explorerRow - 12;
-                        explorerPixel[l] = groupColor[0]; // R
-                        explorerPixel[l + 1] = groupColor[1]; // G
-                        explorerPixel[l + 2] = groupColor[2]; // B
-                        explorerPixel[l + 3] = nonActiveGroupAplha;
-
-                        const l1 = explorerRow - 8;
-                        explorerPixel[l1] = groupColor[0]; // R
-                        explorerPixel[l1 + 1] = groupColor[1]; // G
-                        explorerPixel[l1 + 2] = groupColor[2]; // B
-                        explorerPixel[l1 + 3] = nonActiveGroupAplha;
-
-                        const l2 = explorerRow - 4;
-                        explorerPixel[l2] = groupColor[0]; // R
-                        explorerPixel[l2 + 1] = groupColor[1]; // G
-                        explorerPixel[l2 + 2] = groupColor[2]; // B
-                        explorerPixel[l2 + 3] = nonActiveGroupAplha;
-
-                        // draw right boarder
-                        const r = explorerRow + (imgW + 2) * 4;
-                        explorerPixel[r] = groupColor[0]; // R
-                        explorerPixel[r + 1] = groupColor[1]; // G
-                        explorerPixel[r + 2] = groupColor[2]; // B
-                        explorerPixel[r + 3] = nonActiveGroupAplha;
-
-                        const r1 = explorerRow + (imgW + 1) * 4;
-                        explorerPixel[r1] = groupColor[0]; // R
-                        explorerPixel[r1 + 1] = groupColor[1]; // G
-                        explorerPixel[r1 + 2] = groupColor[2]; // B
-                        explorerPixel[r1 + 3] = nonActiveGroupAplha;
-
-                        const r2 = explorerRow + imgW * 4;
-                        explorerPixel[r2] = groupColor[0]; // R
-                        explorerPixel[r2 + 1] = groupColor[1]; // G
-                        explorerPixel[r2 + 2] = groupColor[2]; // B
-                        explorerPixel[r2 + 3] = nonActiveGroupAplha;
-                    }
-                }
-            }
 
             /**
              DRAW IMAGE
@@ -1425,52 +1366,7 @@ export default class ExplorerState {
                 }
             }
 
-            /**
-             DRAW RANK COLOR BORDER
-             */
-            if (boarderRankedMode) {
-                const color = gradient[node.cliqueLength];
-                // draw boarder
-                for (let imgRow = -2; imgRow <= imgH + 1; imgRow += 1) {
-                    const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
-                    if (imgRow === -2 || imgRow === -1 || imgRow === imgH + 1 || imgRow === imgH) {
-                        // draw top line r
-                        for (let imgCol = -2; imgCol < imgW + 2; imgCol += 1) {
-                            const c = explorerRow + imgCol * 4;
-                            explorerPixel[c] = color[0]; // R
-                            explorerPixel[c + 1] = color[1]; // G
-                            explorerPixel[c + 2] = color[2]; // B
-                            explorerPixel[c + 3] = 200;
-                        }
-                    } else {
-                        // draw right boarder
-                        const r = explorerRow - 4;
-                        explorerPixel[r] = color[0]; // R
-                        explorerPixel[r + 1] = color[1]; // G
-                        explorerPixel[r + 2] = color[2]; // B
-                        explorerPixel[r + 3] = 200;
 
-                        const r2 = explorerRow - 8;
-                        explorerPixel[r2] = color[0]; // R
-                        explorerPixel[r2 + 1] = color[1]; // G
-                        explorerPixel[r2 + 2] = color[2]; // B
-                        explorerPixel[r2 + 3] = 200;
-
-                        // draw left boarder
-                        const l = explorerRow + (imgW + 1) * 4;
-                        explorerPixel[l] = color[0]; // R
-                        explorerPixel[l + 1] = color[1]; // G
-                        explorerPixel[l + 2] = color[2]; // B
-                        explorerPixel[l + 3] = 200;
-
-                        const l2 = explorerRow + imgW * 4;
-                        explorerPixel[l2] = color[0]; // R
-                        explorerPixel[l2 + 1] = color[1]; // G
-                        explorerPixel[l2 + 2] = color[2]; // B
-                        explorerPixel[l2 + 3] = 200;
-                    }
-                }
-            }
 
             /**
              DRAW LABEL BORDER
@@ -1520,80 +1416,6 @@ export default class ExplorerState {
                         explorerPixel[r2] = color[0]; // R
                         explorerPixel[r2 + 1] = color[1]; // G
                         explorerPixel[r2 + 2] = color[2]; // B
-                        explorerPixel[r2 + 3] = 200;
-                    }
-                }
-            }
-
-            /**
-             DRAW GROUP BORDER
-             */
-            // TODO Perfomance is maybe bedder without another loop
-
-            // draw only if group, label2 or proposal
-            if (
-                !node.group
-                && !node.isNearly
-                // && (!proposal)
-            ) return;
-
-            const lineColor = node.isNearly ? nearColor : node.group ? groupColor : null;
-            if (lineColor) {
-                for (let imgRow = -3; imgRow <= imgH + 2; imgRow += 1) {
-                    const explorerRow = ((imgY + imgRow) * explorerW + imgX) * 4;
-                    if (
-                        imgRow === -3
-                        || imgRow === -2
-                        || imgRow === -1
-                        || imgRow === imgH + 1
-                        || imgRow === imgH + 2
-                        || imgRow === imgH
-                    ) {
-                        // draw top line r
-                        for (let imgCol = -3; imgCol < imgW + 3; imgCol += 1) {
-                            const c = explorerRow + imgCol * 4;
-                            explorerPixel[c] = lineColor[0]; // R
-                            explorerPixel[c + 1] = lineColor[1]; // G
-                            explorerPixel[c + 2] = lineColor[2]; // B
-                            explorerPixel[c + 3] = 200;
-                        }
-                    } else {
-                        // draw left boarder
-                        const l = explorerRow - 12;
-                        explorerPixel[l] = lineColor[0]; // R
-                        explorerPixel[l + 1] = lineColor[1]; // G
-                        explorerPixel[l + 2] = lineColor[2]; // B
-                        explorerPixel[l + 3] = 200;
-
-                        const l1 = explorerRow - 8;
-                        explorerPixel[l1] = groupColor[0]; // R
-                        explorerPixel[l1 + 1] = groupColor[1]; // G
-                        explorerPixel[l1 + 2] = groupColor[2]; // B
-                        explorerPixel[l1 + 3] = 200;
-
-                        const l2 = explorerRow - 4;
-                        explorerPixel[l2] = lineColor[0]; // R
-                        explorerPixel[l2 + 1] = lineColor[1]; // G
-                        explorerPixel[l2 + 2] = lineColor[2]; // B
-                        explorerPixel[l2 + 3] = 200;
-
-                        // draw left boarder
-                        const r = explorerRow + (imgW + 2) * 4;
-                        explorerPixel[r] = lineColor[0]; // R
-                        explorerPixel[r + 1] = lineColor[1]; // G
-                        explorerPixel[r + 2] = lineColor[2]; // B
-                        explorerPixel[r + 3] = 200;
-
-                        const r1 = explorerRow + (imgW + 1) * 4;
-                        explorerPixel[r1] = groupColor[0]; // R
-                        explorerPixel[r1 + 1] = groupColor[1]; // G
-                        explorerPixel[r1 + 2] = groupColor[2]; // B
-                        explorerPixel[r1 + 3] = 200;
-
-                        const r2 = explorerRow + imgW * 4;
-                        explorerPixel[r2] = lineColor[0]; // R
-                        explorerPixel[r2 + 1] = lineColor[1]; // G
-                        explorerPixel[r2 + 2] = lineColor[2]; // B
                         explorerPixel[r2 + 3] = 200;
                     }
                 }
@@ -1936,8 +1758,7 @@ export default class ExplorerState {
                     this.updateGroupCount();
                 }
                 this.draggedNode = false;
-                // update clustering after move one or more nodes
-                return this.ui.recalcClustering && this.createCluster(); // draw triggers in create cluster
+                return this.triggerDraw();
             }
 
             // todo update instead of recreate supercluster here maybe bedder? how?
@@ -2023,7 +1844,6 @@ export default class ExplorerState {
     }
 
     addNodesInRangeToGroup() {
-        /*
         Object.values(this.nodes).forEach((node) => {
             if (node.isNearly) {
                 node.group = true;
@@ -2031,6 +1851,5 @@ export default class ExplorerState {
                 node.isNearly = false; // remove nearly status
             }
         });
-         */
     }
 }
