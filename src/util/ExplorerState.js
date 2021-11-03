@@ -338,7 +338,7 @@ export default class ExplorerState {
                 ...node,
             };
             newNode.index = index;
-            console.log({ newNode, node, index });
+            console.log({newNode, node, index});
             this.addNode(newNode);
         });
         console.log(this.nodes);
@@ -378,7 +378,7 @@ export default class ExplorerState {
                 representImgSize,
             } = this;
 
-            const { clusterMode } = this.ui;
+            const {clusterMode} = this.ui;
 
             // count nodes inside explorer todo that can be perform bedder
             Object.values(this.nodes).forEach((node) => {
@@ -494,7 +494,7 @@ export default class ExplorerState {
 
         // console.log(cluster);
         cluster.forEach((c) => {
-            const { index, cluster_id, point_count } = c.properties;
+            const {index, cluster_id, point_count} = c.properties;
             // console.log({ index, cluster_id, point_count } )
             if (index) {
                 // this is a not clustered point
@@ -522,7 +522,7 @@ export default class ExplorerState {
                         centroidId = p.properties.index;
                     }
                 });
-                if (log) console.log({ centroidId, min });
+                if (log) console.log({centroidId, min});
                 // console.log({ centroidId, id: c.properties.centroidId });
                 // set centroid as represent
                 this.nodes[centroidId].isClusterd = false;
@@ -624,8 +624,8 @@ export default class ExplorerState {
     getNodes() {
         const nodes = {};
         Object.values(this.nodes).forEach(({
-            index, x, y, name, labels, groupId,
-        }) => {
+                                               index, x, y, name, labels, groupId,
+                                           }) => {
             nodes[index] = {
                 index,
                 x,
@@ -1017,12 +1017,12 @@ export default class ExplorerState {
             /**
              DRAW LABEL BORDER
              */
-            // Todo get variables via this.ui
+                // Todo get variables via this.ui
             const labelBorder = this.selectedCategory
                 && this.selectedLabel
                 && this.selectedLabel === node.labels[this.selectedCategory];
             if (labelBorder) {
-                const { color } = this.ui.labels[this.selectedCategory].labels.find(
+                const {color} = this.ui.labels[this.selectedCategory].labels.find(
                     e => e.name === this.selectedLabel,
                 );
                 // draw boarder
@@ -1146,11 +1146,15 @@ export default class ExplorerState {
          DRAW SCISSORS
          */
         if (this.drawScissors) {
-            const explorerX = this.scissorStartX < this.scissorEndX ? this.scissorStartX : this.scissorEndX;
-            const explorerY = this.scissorStartY < this.scissorEndY ? this.scissorStartY : this.scissorEndY;
+            let explorerX = (this.scissorStartX < this.scissorEndX
+                ? this.scissorStartX : this.scissorEndX);
+            explorerX = this.closestInteger(explorerX, 2) / 2;
+            let explorerY = (this.scissorStartY < this.scissorEndY
+                ? this.scissorStartY : this.scissorEndY);
+            explorerY = this.closestInteger(explorerY, 2) / 2;
 
-            const scissorW = Math.abs(this.scissorEndX - this.scissorStartX);
-            const scissorH = Math.abs(this.scissorEndY - this.scissorStartY);
+            const scissorW = Math.abs(this.scissorEndX - this.scissorStartX) / 2;
+            const scissorH = Math.abs(this.scissorEndY - this.scissorStartY) / 2;
 
             // '#3882ff';
             const color = this.scissiorColor;
@@ -1162,13 +1166,13 @@ export default class ExplorerState {
                 // loop through each col of the reactangle
                 for (let scisCol = 0; scisCol < scissorW; scisCol += 1) {
                     const c = explorerRow + scisCol * 4;
-                    if (scisRow === 0 || scisRow === scissorH - 1) {
+                    if (scisRow <= 1 || scisRow >= scissorH - 2) {
                         // draw top line r
                         explorerPixel[c] = color[0]; // R
                         explorerPixel[c + 1] = color[1]; // G
                         explorerPixel[c + 2] = color[2]; // B
                         explorerPixel[c + 3] = 255;
-                    } else if (scisCol === 0 || scisCol === scissorW - 1) {
+                    } else if (scisCol <= 1 || scisCol >= scissorW - 2) {
                         // draw left boarder
                         const l = explorerRow;
                         explorerPixel[l] = color[0]; // R
@@ -1367,16 +1371,15 @@ export default class ExplorerState {
             }
 
 
-
             /**
              DRAW LABEL BORDER
              */
-            // Todo get variables via this.ui
+                // Todo get variables via this.ui
             const labelBorder = this.selectedCategory
                 && this.selectedLabel
                 && this.selectedLabel === node.labels[this.selectedCategory];
             if (labelBorder) {
-                const { color } = this.ui.labels[this.selectedCategory].labels.find(
+                const {color} = this.ui.labels[this.selectedCategory].labels.find(
                     e => e.name === this.selectedLabel,
                 );
                 // draw boarder
@@ -1426,11 +1429,14 @@ export default class ExplorerState {
          DRAW SCISSORS
          */
         if (this.drawScissors) {
-            const explorerX = this.scissorStartX < this.scissorEndX ? this.scissorStartX : this.scissorEndX;
-            const explorerY = this.scissorStartY < this.scissorEndY ? this.scissorStartY : this.scissorEndY;
-
-            const scissorW = Math.abs(this.scissorEndX - this.scissorStartX);
-            const scissorH = Math.abs(this.scissorEndY - this.scissorStartY);
+            let explorerX = (this.scissorStartX < this.scissorEndX
+                ? this.scissorStartX : this.scissorEndX);
+            explorerX = this.closestInteger(explorerX, resize) / resize;
+            let explorerY = (this.scissorStartY < this.scissorEndY
+                ? this.scissorStartY : this.scissorEndY);
+            explorerY = this.closestInteger(explorerY, resize) / resize;
+            const scissorW = Math.abs(this.scissorEndX - this.scissorStartX) / resize;
+            const scissorH = Math.abs(this.scissorEndY - this.scissorStartY) / resize;
 
             // '#3882ff';
             const color = this.scissiorColor;
@@ -1442,13 +1448,13 @@ export default class ExplorerState {
                 // loop through each col of the reactangle
                 for (let scisCol = 0; scisCol < scissorW; scisCol += 1) {
                     const c = explorerRow + scisCol * 4;
-                    if (scisRow === 0 || scisRow === scissorH - 1) {
+                    if (scisRow <= 1 || scisRow >= scissorH - 2) {
                         // draw top line r
                         explorerPixel[c] = color[0]; // R
                         explorerPixel[c + 1] = color[1]; // G
                         explorerPixel[c + 2] = color[2]; // B
                         explorerPixel[c + 3] = 255;
-                    } else if (scisCol === 0 || scisCol === scissorW - 1) {
+                    } else if (scisCol <= 1 || scisCol >= scissorW - 2) {
                         // draw left boarder
                         const l = explorerRow;
                         explorerPixel[l] = color[0]; // R
@@ -1572,7 +1578,7 @@ export default class ExplorerState {
         // console.log(e.offsetY);
 
         // saving for checking if node was clicked in handleMouseUp
-        const { nodeUnderMouse } = this;
+        const {nodeUnderMouse} = this;
         this.nodeOnMouseDown = nodeUnderMouse;
 
         // save start position
@@ -1613,7 +1619,7 @@ export default class ExplorerState {
             this.scissorEndX = mouseX;
             this.scissorEndY = mouseY;
             if (this.wasm) this.wasm.stateSetScissiorEndXY(mouseX, mouseY);
-            return this.triggerDrawPreview();
+            return this.triggerDraw();
         }
 
         // DRAG AND DROP
@@ -1704,7 +1710,7 @@ export default class ExplorerState {
             this.panning = false;
             return this.triggerDraw(true);
         }
-        const { nodeUnderMouse } = this;
+        const {nodeUnderMouse} = this;
 
         /** check if image under mouse is still the same as on last set */
         if (nodeUnderMouse && nodeUnderMouse === this.nodeOnMouseDown) {
@@ -1740,7 +1746,7 @@ export default class ExplorerState {
                         console.log('add proposal to group');
                         this.removedProposals[nodeUnderMouse.index] = this.proposals[
                             nodeUnderMouse.index
-                        ];
+                            ];
                         this.proposals[nodeUnderMouse.index] = undefined;
                     } else {
                         // node is removed from group
@@ -1758,7 +1764,7 @@ export default class ExplorerState {
                     this.updateGroupCount();
                 }
                 this.draggedNode = false;
-                return this.triggerDraw();
+                return this.triggerDraw(true);
             }
 
             // todo update instead of recreate supercluster here maybe bedder? how?
